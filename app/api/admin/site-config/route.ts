@@ -13,6 +13,8 @@ export const PATCH = withApiErrors(async (req: Request) => {
   await requireAdmin();
 
   const updates = await req.json();
+  const config = await getSiteConfig();
+
   const allowed = [
     "siteName",
     "tagline",
@@ -22,13 +24,11 @@ export const PATCH = withApiErrors(async (req: Request) => {
     "plans",
     "payPerListenRateUSD",
     "defaultTheme",
-  ];
+  ] as const satisfies readonly (keyof typeof config)[];
 
-  const config = await getSiteConfig();
   for (const key of allowed) {
     if (key in updates) {
-      // @ts-expect-error affectation dynamique contrôlée par la liste `allowed`
-      config[key] = updates[key];
+      (config[key] as unknown) = updates[key];
     }
   }
   config.updatedAt = new Date();
