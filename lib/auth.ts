@@ -29,6 +29,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Aucun compte associé à cet email.");
         }
 
+        if (user.suspended) {
+          throw new Error("Ce compte a été suspendu.");
+        }
+
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) {
           throw new Error("Mot de passe incorrect.");

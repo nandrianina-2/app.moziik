@@ -4,8 +4,12 @@ import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { AuthProvider } from "@/context/AuthProvider";
 import { ToastProvider } from "@/context/ToastProvider";
+import { PlayerProvider } from "@/context/PlayerProvider";
+import { SiteConfigProvider } from "@/context/SiteConfigProvider";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { MiniPlayerBar } from "@/components/player/MiniPlayerBar";
+import { FullPlayerPage } from "@/components/player/FullPlayerPage";
 import { defaultSiteConfig } from "@/config/site";
 
 const display = Sora({ subsets: ["latin"], variable: "--font-display" });
@@ -21,17 +25,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className="dark">
       <body className={`${display.variable} ${body.variable} ${mono.variable}`}>
-        <AuthProvider>
-          <ThemeProvider>
-            <ToastProvider>
-              <div className="flex min-h-screen">
-                <Sidebar />
-                <main className="flex-1 pb-24 md:pb-6">{children}</main>
-              </div>
-              <MobileNav />
-            </ToastProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <SiteConfigProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <ToastProvider>
+                <PlayerProvider>
+                  <div className="flex min-h-screen">
+                    <Sidebar />
+                    <main className="flex-1 pb-40 md:pb-24">{children}</main>
+                  </div>
+                  <MiniPlayerBar />
+                  <FullPlayerPage />
+                  <MobileNav />
+                </PlayerProvider>
+              </ToastProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </SiteConfigProvider>
       </body>
     </html>
   );

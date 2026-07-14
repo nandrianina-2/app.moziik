@@ -1,4 +1,4 @@
-import mongoose, { Schema, models, model } from "mongoose";
+import mongoose, { Schema, models, model, Types } from "mongoose";
 
 export type UserRole = "member" | "artist" | "admin";
 
@@ -10,7 +10,9 @@ export interface IUser {
   avatarUrl?: string;
   role: UserRole;
   verifiedArtist: boolean;
+  suspended: boolean;
   badges: string[];
+  likedSongs: Types.ObjectId[];
   resetToken?: string;
   resetTokenExpires?: Date;
   createdAt: Date;
@@ -24,7 +26,9 @@ const UserSchema = new Schema<IUser>({
   avatarUrl: { type: String },
   role: { type: String, enum: ["member", "artist", "admin"], default: "member" },
   verifiedArtist: { type: Boolean, default: false },
+  suspended: { type: Boolean, default: false },
   badges: { type: [String], default: [] },
+  likedSongs: [{ type: Schema.Types.ObjectId, ref: "Song" }],
   resetToken: { type: String },
   resetTokenExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },

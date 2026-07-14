@@ -11,6 +11,7 @@ export interface IArtist {
   followers: Types.ObjectId[]; // Users qui suivent l'artiste
   totalPlays: number;
   monetizationEnabled: boolean;
+  eventPublishingAuthorized: boolean; // accordé par un admin
   createdAt: Date;
 }
 
@@ -25,6 +26,7 @@ const ArtistSchema = new Schema<IArtist>({
   followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
   totalPlays: { type: Number, default: 0 },
   monetizationEnabled: { type: Boolean, default: true },
+  eventPublishingAuthorized: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

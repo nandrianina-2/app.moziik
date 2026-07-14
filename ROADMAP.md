@@ -39,26 +39,85 @@ testable indépendamment, avant de passer à la suivante.
 - Subscription : plan, méthode de paiement (Stripe / Mobile Money), région
 - SiteConfig : document unique piloté par l'admin (nom, logo, coûts, taux de rémunération)
 
-## Phase 5 — Musique & artistes
-- Upload (Cloudinary), lecteur complet (mini + full player, EQ)
-- Albums, playlists, planification des sorties
-- Badges (membre / artiste vérifié)
+## Phase 5 — Musique & artistes (TERMINÉ)
+- Upload : audio + pochette envoyés directement navigateur → Cloudinary
+  (upload preset non-signé), pour ne pas passer par le serveur Next.js
+- Routes API : `/api/songs`, `/api/albums`, `/api/playlists` (CRUD +
+  ajout/retrait de sons), `/api/badges`
+- Planification des sorties : `releaseDate` future → statut `scheduled`,
+  publication automatique via `/api/cron/publish-songs` (à brancher sur
+  un cron externe, ex. Vercel Cron) qui notifie les abonnés
+- Traçage des écoutes dès Phase 5 : `/api/songs/[id]/play` enregistre
+  pays/ville (en-têtes Vercel) et alimente `Play`
+- Lecteur complet : `PlayerProvider` (file d'attente, lecture/pause,
+  progression), mini-lecteur persistant, lecteur plein écran avec vrai
+  égaliseur **10 bandes** (Web Audio API, `BiquadFilterNode`) + **Bass
+  Boost** dédié façon Poweramp (low-shelf + compensation de volume),
+  presets, et panneau file d'attente
+- `SongRow`, `BadgeChip`, `UploadModal` (réservée aux artistes)
+- **Menu contextuel par son** (`SongContextMenu`) : déclenché par le
+  bouton `...`, le clic droit (desktop) ou l'appui long (mobile, via
+  `useLongPress`) — file d'attente, ajout à une playlist (avec
+  création à la volée), j'aime, téléchargement, partage, crédits,
+  navigation vers l'artiste/l'album, suppression pour le propriétaire/admin
+- **Featurings** : un son peut être publié avec des artistes en
+  featuring (`FeaturingPicker`, recherche live via `/api/artists`) ;
+  l'artiste crédité reçoit une notification et peut confirmer ou
+  retirer le crédit (`/api/songs/[id]/featuring`)
+- Nouvelles pages `/artiste/[id]` (profil, sons, albums, suivi) et
+  `/album/[id]` (lecture de l'album), destinations du menu contextuel
+  et des notifications
 
-## Phase 6 — Administration
-- Gestion membres / artistes / autres admins
-- Modération musiques et évènements
-- Coûts d'abonnement modifiables
+## Phase 6 — Administration (TERMINÉ)
+- Dashboard `/admin` : statistiques (membres, artistes, sons, évènements en attente, abonnements)
+- `/admin/membres` : recherche, changement de rôle (membre/artiste/admin),
+  vérification artiste (badge), suspension de compte
+- `/admin/musiques` : modération des sons soumis par les artistes
+  (approbation → publié ou planifié selon la date de sortie ; rejet)
+- `/admin/evenements` : modération des évènements soumis par des
+  artistes autorisés
+- `/admin/parametres` : nom du site, logo (upload Cloudinary), slogan,
+  email de support, copyright, **coûts d'abonnement modifiables**
+  (USD + MGA), taux de rémunération par écoute
+- Les sons créés par un artiste passent désormais par la modération
+  (`draft` → `published`/`scheduled` après validation) ; ceux créés
+  par un admin sont publiés directement
+- Un artiste ne peut publier un évènement que si un admin lui a
+  accordé `eventPublishingAuthorized`
+- `/api/site-config` (public) + `SiteConfigProvider` : la sidebar,
+  l'accueil et les pages d'auth affichent le nom/logo/slogan configurés
+  par l'admin, pas des valeurs figées
 
-## Phase 7 — Monétisation
-- Abonnements + Stripe (international)
-- Paiement mobile (Mobile Money) selon la région
-- Rémunération à l'écoute
+## Phase 7 — Monétisation (TERMINÉ)
+- **Stripe** : `/api/subscriptions/checkout` crée une session Checkout
+  avec un prix généré à la volée depuis `SiteConfig` (pas de Price ID
+  figé — reste synchronisé avec `/admin/parametres`) ; webhook
+  `/api/webhooks/stripe` synchronise `Subscription` (activation,
+  renouvellement, annulation)
+- **Mobile Money (MVola)** : `lib/mvola.ts` (auth OAuth + initiation
+  merchantpay), `/api/subscriptions/mobile-money` initie le paiement,
+  `/api/webhooks/mvola` confirme via callback
+- **Détection de région** : `/api/region` (en-têtes Vercel) propose le
+  mode de paiement adapté ; `/abonnement` affiche les deux avec les
+  prix USD *et* MGA configurés par l'admin
+- **Rémunération à l'écoute** : modèle `Royalty`, cron
+  `/api/cron/compute-royalties` (à planifier quotidiennement) agrège
+  les écoutes complètes non monétisées au tarif `payPerListenRateUSD`
+  et notifie l'artiste ; page `/artiste/revenus` pour consulter
+  l'historique
 
-## Phase 8 — Analytics & recommandations
-- Traçage des écoutes (pays / lieu)
-- Classements jour / semaine / mois / année
-- Analyse de sentiment des commentaires
-- Recommandations personnalisées
+## Phase 8 — Analytics & recommandations (TERMINÉ)
+- Traçage pays/ville déjà en place depuis la Phase 5 (`Play`)
+- `/api/charts` : classements jour/semaine/mois/année, par sons,
+  artistes ou auditeurs (agrégation MongoDB sur `Play`), page `/classements`
+- `/api/songs/[id]/comments` : commentaires avec analyse de sentiment
+  automatique (`lib/sentiment.ts`, lexique FR autonome, positif/neutre/
+  négatif), affichée avec une icône sur chaque commentaire
+- `/api/recommendations` : recommandations par genres écoutés ces 30
+  derniers jours (repli sur les sons populaires si pas d'historique ou
+  utilisateur anonyme), section "Recommandé pour toi" sur l'accueil
+- Nouvelle page `/son/[id]` : détail d'un son, lecture, commentaires —
+  c'est la page vers laquelle pointent les notifications "nouveau son"
 
 ## Phase 9 — PWA & offline
 - Manifest, service worker, téléchargement offline
