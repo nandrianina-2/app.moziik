@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import Song from "@/models/Song";
 import Artist from "@/models/Artist";
@@ -27,7 +28,7 @@ export const POST = withApiErrors(async (req: Request) => {
     const artist = await Artist.findById(song.artist);
     if (artist && artist.followers.length > 0) {
       await notifyMany(
-        artist.followers.map((f) => f.toString()),
+        artist.followers.map((f: Types.ObjectId) => f.toString()),
         {
           type: "new_song",
           title: "Nouveau son disponible",
