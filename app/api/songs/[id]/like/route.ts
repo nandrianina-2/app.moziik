@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { Types } from "mongoose";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import User from "@/models/User";
@@ -19,10 +20,10 @@ export const POST = withApiErrors(
     if (!user) throw new ApiError("Utilisateur introuvable.", 404);
     if (!song) throw new ApiError("Son introuvable.", 404);
 
-    const alreadyLiked = user.likedSongs.some((id) => id.equals(song._id));
+    const alreadyLiked = user.likedSongs.some((id: Types.ObjectId) => id.equals(song._id));
 
     if (alreadyLiked) {
-      user.likedSongs = user.likedSongs.filter((id) => !id.equals(song._id));
+      user.likedSongs = user.likedSongs.filter((id: Types.ObjectId) => !id.equals(song._id));
       song.likesCount = Math.max(0, song.likesCount - 1);
     } else {
       user.likedSongs.push(song._id);
