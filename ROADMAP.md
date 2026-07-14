@@ -119,6 +119,32 @@ testable indépendamment, avant de passer à la suivante.
 - Nouvelle page `/son/[id]` : détail d'un son, lecture, commentaires —
   c'est la page vers laquelle pointent les notifications "nouveau son"
 
-## Phase 9 — PWA & offline
-- Manifest, service worker, téléchargement offline
-- Pages contact / mentions légales / copyright
+## Ajustements post-Phase 8 (TERMINÉ)
+- **Bug corrigé** : un admin sans profil `Artist` peut désormais publier
+  un son en précisant `artistId` (au lieu d'échouer avec 404)
+- **Pages manquantes construites** (liens de la nav qui menaient à des
+  404) : `/compte`, `/bibliotheque`, `/recherche`, `/evenements`,
+  `/radio`, `/playlist/[id]`, `/son/[id]/modifier`
+- `/admin/badges` : création de badges + attribution à un membre
+- `/admin/membres` : bouton pour autoriser un artiste à publier des
+  évènements (`eventPublishingAuthorized`)
+- Le titre du site (`<title>`) est maintenant dynamique
+  (`generateMetadata` + `getSiteConfig()`), cohérent avec le reste de
+  l'app
+
+## Phase 9 — PWA & offline (TERMINÉ)
+- `app/manifest.ts` : manifest PWA généré dynamiquement (nom, logo,
+  couleurs) depuis `SiteConfig` — pas de fichier statique à resynchroniser
+- `public/sw.js` : service worker, network-first pour l'app (repli
+  cache si hors-ligne), cache-first pour les médias Cloudinary déjà
+  téléchargés explicitement
+- `lib/offlineCache.ts` + option **"Écouter hors-ligne"** dans le menu
+  contextuel de chaque son : télécharge audio + pochette dans le Cache
+  Storage du navigateur, indexés en local pour l'onglet **Hors-ligne**
+  de `/bibliotheque` (lecture et suppression, sans connexion)
+- `FloatingInstallButton` + `usePWA()` : bouton d'installation natif
+  (`beforeinstallprompt`), s'enregistre le service worker au chargement
+- Pages **`/contact`** (formulaire → email de support via nodemailer)
+  et **`/mentions-legales`** (propriété intellectuelle, contenu
+  utilisateurs, données personnelles, copyright — texte dynamique
+  depuis `SiteConfig`), liées depuis le pied de la sidebar et `/compte`

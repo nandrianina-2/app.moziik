@@ -15,7 +15,7 @@ export const POST = withApiErrors(async (req: Request) => {
   if (!["premium", "premium_annual"].includes(plan)) throw new ApiError("Plan invalide.");
 
   const config = await getSiteConfig();
-  const pricing = config.plans.find((p: { plan: any; }) => p.plan === plan);
+  const pricing = config.plans.find((p) => p.plan === plan);
   if (!pricing) throw new ApiError("Ce plan n'est pas configuré.", 404);
 
   await connectDB();

@@ -118,8 +118,26 @@ Tous les modèles vivent dans `models/` : `User`, `Artist`, `Song`,
 - Les recommandations sont du filtrage par contenu (genres écoutés),
   pas du collaboratif — un bon point de départ, améliorable plus tard
 
-Voir `ROADMAP.md` pour la suite (Phase 9, la dernière).
+## Phase 9 — PWA & offline
+- Le mode hors-ligne utilise le **Cache Storage** du navigateur (pas
+  IndexedDB) — suffisant pour des fichiers audio, avec un index léger
+  en `localStorage` pour l'UI de `/bibliotheque`
+- Le service worker (`public/sw.js`) doit être servi à la racine du
+  domaine (`/sw.js`) pour pouvoir contrôler toute l'app — c'est déjà
+  le cas via `public/`
+- L'icône PWA utilise le logo configuré dans `/admin/parametres` ;
+  pour un rendu optimal, prévoir un logo carré ≥512×512
+- `/contact` a besoin des variables SMTP déjà configurées en Phase 2
 
-## Prochaine étape
-Phase 9 — PWA & offline (manifest, service worker, téléchargement
-hors-ligne, pages contact / mentions légales / copyright).
+## C'est la dernière phase de la roadmap initiale
+
+Le projet couvre maintenant l'intégralité du cahier des charges de
+départ : fondations, auth, erreurs/notifications, modèles de données,
+musique/artistes (upload, lecteur 10 bandes + bass boost, menu
+contextuel, featurings), administration, monétisation (Stripe +
+Mobile Money + royalties), analytics/recommandations, et PWA/offline.
+
+Pistes naturelles pour la suite, si besoin : recherche globale plus
+avancée (filtres, tri), gestion des sessions/appareils connectés,
+tests automatisés, et déploiement (Vercel + variables d'environnement
+listées dans `.env.example`).

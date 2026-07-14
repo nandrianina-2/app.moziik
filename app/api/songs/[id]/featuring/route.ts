@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import Song from "@/models/Song";
 import Artist from "@/models/Artist";
-import type { ISongFeaturing } from "@/models/Song";
 import { ApiError, withApiErrors } from "@/lib/apiError";
 
 export const POST = withApiErrors(
@@ -21,11 +20,11 @@ export const POST = withApiErrors(
     const song = await Song.findById(params.id);
     if (!song) throw new ApiError("Son introuvable.", 404);
 
-    const credit = song.featuring.find((f: ISongFeaturing) => f.artist.equals(artistProfile._id));
+    const credit = song.featuring.find((f) => f.artist.equals(artistProfile._id));
     if (!credit) throw new ApiError("Tu n'es pas crédité sur ce son.", 404);
 
     if (decision === "remove") {
-      song.featuring = song.featuring.filter((f: ISongFeaturing) => !f.artist.equals(artistProfile._id));
+      song.featuring = song.featuring.filter((f) => !f.artist.equals(artistProfile._id));
     } else {
       credit.confirmed = true;
     }

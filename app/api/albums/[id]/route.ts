@@ -37,7 +37,8 @@ export const PATCH = withApiErrors(
     const allowed = ["title", "coverUrl", "type", "releaseDate", "songs"];
     for (const key of allowed) {
       if (key in updates) {
-        (album[key] as unknown) = updates[key];
+        // @ts-expect-error affectation dynamique contrôlée par la liste `allowed`
+        album[key] = updates[key];
       }
     }
     await album.save();

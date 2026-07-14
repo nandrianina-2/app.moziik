@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, BadgeCheck, ShieldOff, ShieldCheck } from "lucide-react";
+import { Search, BadgeCheck, ShieldOff, ShieldCheck, CalendarClock } from "lucide-react";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { useToast } from "@/context/ToastProvider";
 
@@ -12,6 +12,8 @@ type AdminUser = {
   role: "member" | "artist" | "admin";
   verifiedArtist: boolean;
   suspended: boolean;
+  artistId: string | null;
+  eventPublishingAuthorized: boolean;
 };
 
 const roleLabels: Record<AdminUser["role"], string> = {
@@ -61,6 +63,20 @@ export default function AdminMembersPage() {
       return;
     }
     pushToast("success", "Utilisateur mis à jour.");
+    load();
+  }
+
+  async function updateArtist(artistId: string, updates: { eventPublishingAuthorized?: boolean }) {
+    const res = await fetch(`/api/admin/artists/${artistId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      pushToast("error", "La mise à jour a échoué.");
+      return;
+    }
+    pushToast("success", "Artiste mis à jour.");
     load();
   }
 
@@ -128,6 +144,20 @@ export default function AdminMembersPage() {
               >
                 <BadgeCheck size={13} />
                 {user.verifiedArtist ? "Retirer vérif." : "Vérifier"}
+              </button>
+            )}
+
+            {user.role === "artist" && user.artistId && (
+              <button
+                onClick={() => updateArtist(user.artistId as string, { eventPublishingAuthorized: !user.eventPublishingAuthorized })}
+                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs ${
+                  user.eventPublishingAuthorized
+                    ? "border-verified text-verified hover:bg-verified/10"
+                    : "border-border text-ink-muted hover:border-accent hover:text-accent"
+                }`}
+              >
+                <CalendarClock size={13} />
+                {user.eventPublishingAuthorized ? "Évènements autorisés" : "Autoriser évènements"}
               </button>
             )}
 

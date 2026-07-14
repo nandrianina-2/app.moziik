@@ -10,16 +10,17 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { MiniPlayerBar } from "@/components/player/MiniPlayerBar";
 import { FullPlayerPage } from "@/components/player/FullPlayerPage";
-import { defaultSiteConfig } from "@/config/site";
+import { FloatingInstallButton } from "@/components/ui/FloatingInstallButton";
+import { getSiteConfig } from "@/lib/siteConfig";
 
 const display = Sora({ subsets: ["latin"], variable: "--font-display" });
 const body = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-body" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-export const metadata: Metadata = {
-  title: defaultSiteConfig.siteName,
-  description: defaultSiteConfig.tagline,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getSiteConfig();
+  return { title: config.siteName, description: config.tagline };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </div>
                   <MiniPlayerBar />
                   <FullPlayerPage />
+                  <FloatingInstallButton />
                   <MobileNav />
                 </PlayerProvider>
               </ToastProvider>

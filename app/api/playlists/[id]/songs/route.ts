@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { Types } from "mongoose";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import Playlist from "@/models/Playlist";
@@ -26,8 +25,8 @@ export const POST = withApiErrors(
     await connectDB();
     const playlist = await loadOwnedPlaylist(params.id, session.user.id);
 
-    if (!playlist.songs.some((s: Types.ObjectId) => s.toString() === songId)) {
-      playlist.songs.push(new Types.ObjectId(songId));
+    if (!playlist.songs.some((s) => s.toString() === songId)) {
+      playlist.songs.push(songId);
       await playlist.save();
     }
 
@@ -46,7 +45,7 @@ export const DELETE = withApiErrors(
     await connectDB();
     const playlist = await loadOwnedPlaylist(params.id, session.user.id);
 
-    playlist.songs = playlist.songs.filter((s: Types.ObjectId) => s.toString() !== songId);
+    playlist.songs = playlist.songs.filter((s) => s.toString() !== songId);
     await playlist.save();
 
     return NextResponse.json({ playlist });

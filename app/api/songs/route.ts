@@ -34,7 +34,7 @@ export const POST = withApiErrors(async (req: Request) => {
     throw new ApiError("Seuls les artistes peuvent publier un son.", 403);
   }
 
-  const { title, audioUrl, coverUrl, duration, genre, albumId, releaseDate, explicit, lyrics, featuringIds } =
+  const { title, audioUrl, coverUrl, duration, genre, albumId, releaseDate, explicit, lyrics, featuringIds, artistId } =
     await req.json();
 
   if (!title || !audioUrl || !coverUrl || !duration || !genre || !releaseDate) {
@@ -42,8 +42,18 @@ export const POST = withApiErrors(async (req: Request) => {
   }
 
   await connectDB();
-  const artistProfile = await Artist.findOne({ user: session.user.id });
-  if (!artistProfile) throw new ApiError("Profil artiste introuvable.", 404);
+
+  let artistProfile;
+  if (session.user.role === "admin") {
+    // Un admin n'a pas forcément de profil Artist : il doit préciser
+    // pour quel artiste il publie.
+    if (!artistId) throw new ApiError("artistId requis pour qu'un admin publie un son.");
+    artistProfile = await Artist.findById(artistId);
+    if (!artistProfile) throw new ApiError("Artiste introuvable.", 404);
+  } else {
+    artistProfile = await Artist.findOne({ user: session.user.id });
+    if (!artistProfile) throw new ApiError("Profil artiste introuvable.", 404);
+  }
 
   const release = new Date(releaseDate);
   // Un son soumis par un artiste attend la validation d'un admin avant

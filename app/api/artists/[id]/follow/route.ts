@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { Types } from "mongoose";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import Artist from "@/models/Artist";
@@ -15,16 +14,12 @@ export const POST = withApiErrors(
     const artist = await Artist.findById(params.id);
     if (!artist) throw new ApiError("Artiste introuvable.", 404);
 
-    const alreadyFollowing = artist.followers.some(
-      (id: Types.ObjectId) => id.toString() === session.user.id
-    );
+    const alreadyFollowing = artist.followers.some((id) => id.toString() === session.user.id);
 
     if (alreadyFollowing) {
-      artist.followers = artist.followers.filter(
-        (id: Types.ObjectId) => id.toString() !== session.user.id
-      );
+      artist.followers = artist.followers.filter((id) => id.toString() !== session.user.id);
     } else {
-      artist.followers.push(new Types.ObjectId(session.user.id));
+      artist.followers.push(session.user.id as unknown as typeof artist.followers[number]);
     }
 
     await artist.save();

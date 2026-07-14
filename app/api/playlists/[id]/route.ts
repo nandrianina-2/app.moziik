@@ -28,7 +28,8 @@ export const PATCH = withApiErrors(
     const allowed = ["title", "description", "coverUrl", "isPublic"];
     for (const key of allowed) {
       if (key in updates) {
-        (playlist[key] as unknown) = updates[key];
+        // @ts-expect-error affectation dynamique contrôlée par la liste `allowed`
+        playlist[key] = updates[key];
       }
     }
     await playlist.save();

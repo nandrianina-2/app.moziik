@@ -43,6 +43,14 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+
+      <div className="mt-auto pt-6 px-3 flex flex-col gap-1 text-xs text-ink-muted">
+        <div className="flex gap-3">
+          <Link href="/contact" className="hover:text-ink">Contact</Link>
+          <Link href="/mentions-legales" className="hover:text-ink">Mentions légales</Link>
+        </div>
+        <p>© {new Date().getFullYear()} {siteConfig.siteName}</p>
+      </div>
     </aside>
   );
 }

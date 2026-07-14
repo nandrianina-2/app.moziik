@@ -7,16 +7,19 @@ import {
   ListMusic,
   Heart,
   Download,
+  DownloadCloud,
   Info,
   Mic2,
   Disc3,
   Share2,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { usePlayer, type PlayableSong } from "@/context/PlayerProvider";
 import { useToast } from "@/context/ToastProvider";
 import { AddToPlaylistModal } from "@/components/modals/AddToPlaylistModal";
 import { CreditsModal } from "@/components/modals/CreditsModal";
+import { downloadSongForOffline, isSongOffline, removeOfflineSong } from "@/lib/offlineCache";
 
 type Position = { x: number; y: number };
 
@@ -40,6 +43,11 @@ export function SongContextMenu({
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    setOffline(isSongOffline(song._id));
+  }, [song._id]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -81,6 +89,28 @@ export function SongContextMenu({
     onClose();
   }
 
+  async function handleToggleOffline() {
+    try {
+      if (offline) {
+        await removeOfflineSong(song._id);
+        pushToast("success", "Retiré du mode hors-ligne.");
+      } else {
+        await downloadSongForOffline({
+          _id: song._id,
+          title: song.title,
+          coverUrl: song.coverUrl,
+          audioUrl: song.audioUrl,
+          duration: song.duration,
+          artistName: song.artist.stageName,
+        });
+        pushToast("success", "Disponible hors-ligne.");
+      }
+    } catch (err) {
+      pushToast("error", err instanceof Error ? err.message : "Échec du mode hors-ligne.");
+    }
+    onClose();
+  }
+
   async function handleShare() {
     const url = `${window.location.origin}/son/${song._id}`;
     if (navigator.share) {
@@ -115,7 +145,12 @@ export function SongContextMenu({
         <MenuItem icon={ListPlus} label="Ajouter à la file d'attente" onClick={() => { enqueue(song); onClose(); }} />
         <MenuItem icon={ListMusic} label="Ajouter à une playlist" onClick={() => setShowAddToPlaylist(true)} />
         <MenuItem icon={Heart} label={liked ? "Ne plus aimer" : "J'aime"} onClick={handleLike} />
-        <MenuItem icon={Download} label="Télécharger" onClick={handleDownload} />
+        <MenuItem
+          icon={DownloadCloud}
+          label={offline ? "Retirer du hors-ligne" : "Écouter hors-ligne"}
+          onClick={handleToggleOffline}
+        />
+        <MenuItem icon={Download} label="Télécharger le fichier" onClick={handleDownload} />
         <MenuItem icon={Share2} label="Partager" onClick={handleShare} />
 
         <div className="my-1.5 h-px bg-border" />
@@ -137,6 +172,11 @@ export function SongContextMenu({
         {canManage && (
           <>
             <div className="my-1.5 h-px bg-border" />
+            <MenuItem
+              icon={Pencil}
+              label="Modifier"
+              onClick={() => { router.push(`/son/${song._id}/modifier`); onClose(); }}
+            />
             <MenuItem icon={Trash2} label="Supprimer" danger onClick={handleDelete} />
           </>
         )}

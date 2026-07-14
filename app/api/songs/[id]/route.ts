@@ -34,7 +34,11 @@ export const PATCH = withApiErrors(
     const allowed = ["title", "coverUrl", "genre", "lyrics", "explicit", "releaseDate", "status"];
     for (const key of allowed) {
       if (key in updates) {
-        (song[key] as unknown) = updates[key];
+        // Un admin peut forcer le statut (validation / rejet) ; un
+        // artiste ne peut que replanifier sa date de sortie.
+        if (key === "status" && session.user.role !== "admin") continue;
+        // @ts-expect-error affectation dynamique contrôlée par la liste `allowed`
+        song[key] = updates[key];
       }
     }
     if (updates.releaseDate) {
