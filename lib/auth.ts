@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import User from "@/models/User";
+import User, { UserRole } from "@/models/User";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -71,18 +71,23 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role?: string }).role;
+        token.id = user.id;
+        token.role = (user as { role?: UserRole }).role;
       }
-      if (!token.role && token.email) {
+      if ((!token.id || !token.role) && token.email) {
         await connectDB();
         const dbUser = await User.findOne({ email: token.email });
-        token.role = dbUser?.role ?? "member";
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          token.role = dbUser.role as UserRole;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role?: string }).role = token.role as string;
+        session.user.id = token.id as string;
+        session.user.role = token.role;
       }
       return session;
     },
