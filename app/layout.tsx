@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Sora, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeProvider";
@@ -21,6 +21,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = await getSiteConfig();
   return { title: config.siteName, description: config.tagline };
 }
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#FF6B4A",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

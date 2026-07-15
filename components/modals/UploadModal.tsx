@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, UploadCloud, Music as MusicIcon } from "lucide-react";
+import { X, UploadCloud, Music as MusicIcon, AlertTriangle } from "lucide-react";
 import { uploadToCloudinaryClient } from "@/lib/cloudinaryClient";
 import { useToast } from "@/context/ToastProvider";
 import { FormField } from "@/components/ui/FormField";
@@ -22,11 +22,18 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError(null);
+
+    if (!title.trim()) {
+      setError("Le titre est requis.");
+      return;
+    }
     if (!audioFile || !coverFile) {
-      pushToast("error", "Ajoute un fichier audio et une pochette.");
+      setError("Ajoute un fichier audio et une pochette.");
       return;
     }
 
@@ -53,15 +60,20 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error);
+        const data = await res.json().catch(() => ({ error: "Réponse invalide du serveur." }));
+        throw new Error(data.error ?? "Échec de la publication.");
       }
 
       pushToast("success", "Son envoyé avec succès.");
       onUploaded();
       onClose();
     } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Échec de l'envoi.");
+      // Toujours visible dans la console pour le débogage, en plus du
+      // message affiché dans l'interface.
+      console.error("Échec de la publication du son :", err);
+      const message = err instanceof Error ? err.message : "Échec de l'envoi.";
+      setError(message);
+      pushToast("error", message);
     } finally {
       setSubmitting(false);
     }
@@ -81,6 +93,13 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="flex items-start gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3.5 py-2.5 text-xs text-accent">
+              <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+              {error}
+            </div>
+          )}
+
           <FormField label="Titre" required value={title} onChange={(e) => setTitle(e.target.value)} />
 
           <label className="block">
