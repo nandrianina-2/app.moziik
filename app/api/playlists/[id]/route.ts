@@ -28,7 +28,7 @@ export const PATCH = withApiErrors(
     const allowed = ["title", "description", "coverUrl", "isPublic"];
     for (const key of allowed) {
       if (key in updates) {
-        playlist[key] = updates[key];
+        (playlist as Record<string, unknown>)[key] = updates[key];
       }
     }
     await playlist.save();

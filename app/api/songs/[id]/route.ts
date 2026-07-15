@@ -37,7 +37,7 @@ export const PATCH = withApiErrors(
         // Un admin peut forcer le statut (validation / rejet) ; un
         // artiste ne peut que replanifier sa date de sortie.
         if (key === "status" && session.user.role !== "admin") continue;
-        song[key] = updates[key];
+        (song as Record<string, unknown>)[key] = updates[key];
       }
     }
     if (updates.releaseDate) {

@@ -37,7 +37,7 @@ export const PATCH = withApiErrors(
     const allowed = ["title", "coverUrl", "type", "releaseDate", "songs"];
     for (const key of allowed) {
       if (key in updates) {
-        album[key] = updates[key];
+        (album as Record<string, unknown>)[key] = updates[key];
       }
     }
     await album.save();
