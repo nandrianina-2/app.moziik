@@ -27,7 +27,7 @@ export const PATCH = withApiErrors(async (req: Request) => {
   const config = await getSiteConfig();
   for (const key of allowed) {
     if (key in updates) {
-      (config as Record<string, unknown>)[key] = updates[key];
+      (config as unknown as Record<string, unknown>)[key] = updates[key];
     }
   }
   config.updatedAt = new Date();
