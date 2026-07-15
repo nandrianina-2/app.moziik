@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type SongStatus = "draft" | "scheduled" | "published" | "rejected";
 
@@ -54,4 +54,4 @@ const SongSchema = new Schema<ISong>({
 
 SongSchema.index({ status: 1, releaseDate: 1 });
 
-export default models.Song || model<ISong>("Song", SongSchema);
+export default (models.Song as Model<ISong>) || model<ISong>("Song", SongSchema);

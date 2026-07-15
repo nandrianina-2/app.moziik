@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type EventStatus = "pending" | "published" | "rejected";
 
@@ -32,4 +32,4 @@ const EventSchema = new Schema<IEvent>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Event || model<IEvent>("Event", EventSchema);
+export default (models.Event as Model<IEvent>) || model<IEvent>("Event", EventSchema);

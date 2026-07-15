@@ -1,4 +1,4 @@
-import { Schema, models, model } from "mongoose";
+import { Schema, models, model, Model } from "mongoose";
 
 export type BadgeCategory = "member" | "artist" | "achievement";
 
@@ -20,4 +20,4 @@ const BadgeSchema = new Schema<IBadge>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Badge || model<IBadge>("Badge", BadgeSchema);
+export default (models.Badge as Model<IBadge>) || model<IBadge>("Badge", BadgeSchema);

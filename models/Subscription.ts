@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type SubscriptionPlan = "free" | "premium" | "premium_annual";
 export type PaymentMethod = "stripe" | "mobile_money";
@@ -34,4 +34,4 @@ const SubscriptionSchema = new Schema<ISubscription>({
   currentPeriodEnd: { type: Date, required: true },
 });
 
-export default models.Subscription || model<ISubscription>("Subscription", SubscriptionSchema);
+export default (models.Subscription as Model<ISubscription>) || model<ISubscription>("Subscription", SubscriptionSchema);

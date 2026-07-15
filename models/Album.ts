@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type AlbumType = "album" | "ep" | "single";
 
@@ -22,4 +22,4 @@ const AlbumSchema = new Schema<IAlbum>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Album || model<IAlbum>("Album", AlbumSchema);
+export default (models.Album as Model<IAlbum>) || model<IAlbum>("Album", AlbumSchema);

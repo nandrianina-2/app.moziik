@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type Sentiment = "positive" | "neutral" | "negative";
 
@@ -26,4 +26,4 @@ const CommentSchema = new Schema<IComment>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Comment || model<IComment>("Comment", CommentSchema);
+export default (models.Comment as Model<IComment>) || model<IComment>("Comment", CommentSchema);

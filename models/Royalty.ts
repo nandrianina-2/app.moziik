@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export interface IRoyalty {
   artist: Types.ObjectId;
@@ -20,4 +20,4 @@ const RoyaltySchema = new Schema<IRoyalty>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Royalty || model<IRoyalty>("Royalty", RoyaltySchema);
+export default (models.Royalty as Model<IRoyalty>) || model<IRoyalty>("Royalty", RoyaltySchema);

@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type NotificationType =
   | "new_song"      // un artiste suivi publie un son
@@ -32,4 +32,4 @@ const NotificationSchema = new Schema<INotification>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Notification || model<INotification>("Notification", NotificationSchema);
+export default (models.Notification as Model<INotification>) || model<INotification>("Notification", NotificationSchema);

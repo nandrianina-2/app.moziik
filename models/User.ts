@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export type UserRole = "member" | "artist" | "admin";
 
@@ -34,4 +34,4 @@ const UserSchema = new Schema<IUser>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.User || model<IUser>("User", UserSchema);
+export default (models.User as Model<IUser>) || model<IUser>("User", UserSchema);

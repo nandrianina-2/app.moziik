@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export interface IArtist {
   user: Types.ObjectId; // référence vers le User (role: "artist")
@@ -30,4 +30,4 @@ const ArtistSchema = new Schema<IArtist>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Artist || model<IArtist>("Artist", ArtistSchema);
+export default (models.Artist as Model<IArtist>) || model<IArtist>("Artist", ArtistSchema);

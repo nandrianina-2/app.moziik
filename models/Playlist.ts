@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export interface IPlaylist {
   title: string;
@@ -22,4 +22,4 @@ const PlaylistSchema = new Schema<IPlaylist>({
   createdAt: { type: Date, default: Date.now },
 });
 
-export default models.Playlist || model<IPlaylist>("Playlist", PlaylistSchema);
+export default (models.Playlist as Model<IPlaylist>) || model<IPlaylist>("Playlist", PlaylistSchema);

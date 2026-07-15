@@ -1,4 +1,4 @@
-import { Schema, models, model } from "mongoose";
+import { Schema, models, model, Model } from "mongoose";
 
 export interface IPlanPricing {
   plan: "premium" | "premium_annual";
@@ -37,4 +37,4 @@ const SiteConfigSchema = new Schema<ISiteConfig>({
 });
 
 // Un seul document en base : on force un id fixe pour le récupérer facilement.
-export default models.SiteConfig || model<ISiteConfig>("SiteConfig", SiteConfigSchema);
+export default (models.SiteConfig as Model<ISiteConfig>) || model<ISiteConfig>("SiteConfig", SiteConfigSchema);

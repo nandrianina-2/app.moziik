@@ -1,4 +1,4 @@
-import { Schema, models, model, Types } from "mongoose";
+import { Schema, models, model, Types, Model } from "mongoose";
 
 export interface IPlay {
   song: Types.ObjectId;
@@ -28,4 +28,4 @@ const PlaySchema = new Schema<IPlay>({
 PlaySchema.index({ song: 1, playedAt: -1 });
 PlaySchema.index({ country: 1, playedAt: -1 });
 
-export default models.Play || model<IPlay>("Play", PlaySchema);
+export default (models.Play as Model<IPlay>) || model<IPlay>("Play", PlaySchema);
