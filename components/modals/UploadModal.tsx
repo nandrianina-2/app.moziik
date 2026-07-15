@@ -104,7 +104,6 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
             <input
               type="file"
               accept="audio/*"
-              required
               className="hidden"
               onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)}
             />
@@ -116,7 +115,6 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
             <input
               type="file"
               accept="image/*"
-              required
               className="hidden"
               onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
             />
