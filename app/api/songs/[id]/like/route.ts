@@ -22,7 +22,7 @@ export const POST = withApiErrors(
     const alreadyLiked = user.likedSongs.some((id) => id.equals(song._id));
 
     if (alreadyLiked) {
-      user.likedSongs = user.likedSongs.filter((id) => !id.equals(song._id));
+      user.likedSongs = user.likedSongs.filter((id) => !id.equals(song._id)) as typeof user.likedSongs;
       song.likesCount = Math.max(0, song.likesCount - 1);
     } else {
       user.likedSongs.push(song._id);

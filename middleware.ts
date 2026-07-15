@@ -9,7 +9,7 @@ export default withAuth(
     if (pathname.startsWith("/admin") && role !== "admin") {
       return NextResponse.redirect(new URL("/", req.url));
     }
-    if (pathname.startsWith("/artiste") && role !== "artist" && role !== "admin") {
+    if (pathname.startsWith("/artiste/revenus") && role !== "artist" && role !== "admin") {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
@@ -22,5 +22,7 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/artiste/:path*", "/compte/:path*"],
+  // /artiste/[id] (profil public) reste volontairement HORS de ce
+  // matcher : n'importe qui doit pouvoir le consulter.
+  matcher: ["/admin/:path*", "/artiste/revenus/:path*", "/compte/:path*"],
 };

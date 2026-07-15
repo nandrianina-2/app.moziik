@@ -24,7 +24,9 @@ export const POST = withApiErrors(
     if (!credit) throw new ApiError("Tu n'es pas crédité sur ce son.", 404);
 
     if (decision === "remove") {
-      song.featuring = song.featuring.filter((f) => !f.artist.equals(artistProfile._id));
+      song.featuring = song.featuring.filter(
+        (f) => !f.artist.equals(artistProfile._id)
+      ) as typeof song.featuring;
     } else {
       credit.confirmed = true;
     }

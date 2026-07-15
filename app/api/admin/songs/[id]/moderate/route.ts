@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import Song from "@/models/Song";
 import { requireAdmin } from "@/lib/requireAdmin";
@@ -22,7 +23,7 @@ export const POST = withApiErrors(
     } else {
       song.status = "rejected";
     }
-    song.approvedBy = session.user.id;
+    song.approvedBy = new Types.ObjectId(session.user.id);
     await song.save();
 
     return NextResponse.json({ song });

@@ -45,7 +45,7 @@ export const DELETE = withApiErrors(
     await connectDB();
     const playlist = await loadOwnedPlaylist(params.id, session.user.id);
 
-    playlist.songs = playlist.songs.filter((s) => s.toString() !== songId);
+    playlist.songs = playlist.songs.filter((s) => s.toString() !== songId) as typeof playlist.songs;
     await playlist.save();
 
     return NextResponse.json({ playlist });

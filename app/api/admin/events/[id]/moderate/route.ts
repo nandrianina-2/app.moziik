@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import Event from "@/models/Event";
 import { requireAdmin } from "@/lib/requireAdmin";
@@ -18,7 +19,7 @@ export const POST = withApiErrors(
     if (!event) throw new ApiError("Évènement introuvable.", 404);
 
     event.status = decision === "approve" ? "published" : "rejected";
-    event.approvedBy = session.user.id;
+    event.approvedBy = new Types.ObjectId(session.user.id);
     await event.save();
 
     return NextResponse.json({ event });

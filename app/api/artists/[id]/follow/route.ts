@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
@@ -17,9 +18,11 @@ export const POST = withApiErrors(
     const alreadyFollowing = artist.followers.some((id) => id.toString() === session.user.id);
 
     if (alreadyFollowing) {
-      artist.followers = artist.followers.filter((id) => id.toString() !== session.user.id);
+      artist.followers = artist.followers.filter(
+        (id) => id.toString() !== session.user.id
+      ) as typeof artist.followers;
     } else {
-      artist.followers.push(session.user.id as unknown as typeof artist.followers[number]);
+      artist.followers.push(new Types.ObjectId(session.user.id));
     }
 
     await artist.save();

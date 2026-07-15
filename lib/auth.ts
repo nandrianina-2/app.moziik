@@ -70,19 +70,25 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as { role?: string }).role;
-      }
-      if (!token.role && token.email) {
+      // On ne relit la base qu'à la connexion initiale (user présent),
+      // pas à chaque requête — le JWT garde id/role ensuite.
+      // Pour Google, `user.id` est l'identifiant OAuth, pas l'_id
+      // MongoDB : on résout donc toujours via l'email pour être sûr
+      // de pointer vers le bon document utilisateur.
+      if (user?.email) {
         await connectDB();
-        const dbUser = await User.findOne({ email: token.email });
-        token.role = dbUser?.role ?? "member";
+        const dbUser = await User.findOne({ email: user.email });
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          token.role = dbUser.role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role?: string }).role = token.role as string;
+        session.user.id = token.id as string;
+        session.user.role = token.role as "member" | "artist" | "admin";
       }
       return session;
     },
