@@ -37,7 +37,6 @@ export const PATCH = withApiErrors(
         // Un admin peut forcer le statut (validation / rejet) ; un
         // artiste ne peut que replanifier sa date de sortie.
         if (key === "status" && session.user.role !== "admin") continue;
-        // @ts-expect-error affectation dynamique contrôlée par la liste `allowed`
         song[key] = updates[key];
       }
     }

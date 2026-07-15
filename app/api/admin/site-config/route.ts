@@ -27,7 +27,6 @@ export const PATCH = withApiErrors(async (req: Request) => {
   const config = await getSiteConfig();
   for (const key of allowed) {
     if (key in updates) {
-      // @ts-expect-error affectation dynamique contrôlée par la liste `allowed`
       config[key] = updates[key];
     }
   }
