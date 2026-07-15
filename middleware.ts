@@ -24,5 +24,8 @@ export default withAuth(
 export const config = {
   // /artiste/[id] (profil public) reste volontairement HORS de ce
   // matcher : n'importe qui doit pouvoir le consulter.
-  matcher: ["/admin/:path*", "/artiste/revenus/:path*", "/compte/:path*"],
+  // /compte n'est plus protégé ici : la page gère déjà l'état non
+  // connecté elle-même (message inline), pas de garde Edge nécessaire
+  // pour une route aussi peu sensible.
+  matcher: ["/admin/:path*", "/artiste/revenus/:path*"],
 };

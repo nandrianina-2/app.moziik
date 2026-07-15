@@ -13,22 +13,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Chaque token pointe vers une variable CSS définie dans
+        // globals.css (valeurs sombres par défaut, redéfinies sous
+        // html.light). Ainsi bg-surface / text-ink / border-border
+        // etc. réagissent au thème PARTOUT dans l'app automatiquement,
+        // sans avoir à écrire de variante -light sur chaque composant.
         base: {
-          DEFAULT: "#0D0F1A", // fond dark
-          light: "#FBF9F4",   // fond light
+          DEFAULT: "rgb(var(--color-base) / <alpha-value>)",
         },
         surface: {
-          DEFAULT: "#161927",
-          light: "#FFFFFF",
+          DEFAULT: "rgb(var(--color-surface) / <alpha-value>)",
         },
         border: {
-          DEFAULT: "#242838",
-          light: "#E7E3D8",
+          DEFAULT: "rgb(var(--color-border) / <alpha-value>)",
         },
         ink: {
-          DEFAULT: "#F2F0E9", // texte dark
-          light: "#171A24",   // texte light
-          muted: "#8B8FA3",
+          DEFAULT: "rgb(var(--color-ink) / <alpha-value>)",
+          muted: "rgb(var(--color-ink-muted) / <alpha-value>)",
         },
         accent: {
           DEFAULT: "#FF6B4A", // corail — actions primaires, lecture
