@@ -148,3 +148,27 @@ testable indépendamment, avant de passer à la suivante.
   et **`/mentions-legales`** (propriété intellectuelle, contenu
   utilisateurs, données personnelles, copyright — texte dynamique
   depuis `SiteConfig`), liées depuis le pied de la sidebar et `/compte`
+
+## Ajustements post-Phase 9 (TERMINÉ)
+- **Bug corrigé** : la modale "Ajouter à une playlist" se fermait
+  instantanément — le détecteur de clic extérieur du menu contextuel
+  considérait tout clic dans la sous-modale comme un clic "en dehors"
+- Menu contextuel : retrait du téléchargement brut du fichier (gardé
+  uniquement "Écouter hors-ligne"), ajout d'un lien direct vers la
+  page du son (et donc ses commentaires)
+- Bibliothèque hors-ligne : lecture au clic + menu complet (comme sur
+  l'accueil) au lieu d'un bouton supprimer isolé ; rafraîchissement
+  automatique via un évènement global à chaque changement
+- `/admin/musiques` : gestion complète de tous les sons (tous statuts,
+  pas seulement en attente), avec modération, édition, suppression
+- Nouvel espace `/artiste/gestion` : sons, albums (création incluse),
+  et featurings à confirmer/retirer
+- Publication admin : sélecteur d'artiste (recherche live) pour
+  publier au nom de n'importe quel artiste existant
+- Accès Premium automatique pour les comptes admin (`lib/premium.ts`),
+  affiché distinctement dans `/compte`
+- Navigation mobile complète : nouvelle barre fixe en haut (menu,
+  logo, notifications, photo de profil) + tiroir latéral listant
+  toutes les routes (y compris espace artiste / administration)
+- Plusieurs pages élargies sur desktop (grilles avec plus de colonnes,
+  largeur de contenu augmentée) pour mieux exploiter l'espace

@@ -6,7 +6,6 @@ import {
   ListPlus,
   ListMusic,
   Heart,
-  Download,
   DownloadCloud,
   Info,
   Mic2,
@@ -14,6 +13,7 @@ import {
   Share2,
   Trash2,
   Pencil,
+  MessageCircle,
 } from "lucide-react";
 import { usePlayer, type PlayableSong } from "@/context/PlayerProvider";
 import { useToast } from "@/context/ToastProvider";
@@ -44,6 +44,13 @@ export function SongContextMenu({
   const [showCredits, setShowCredits] = useState(false);
   const [liked, setLiked] = useState(false);
   const [offline, setOffline] = useState(false);
+
+  // Tant qu'une sous-modale (playlist / crédits) est ouverte, le petit
+  // panneau de menu n'est pas rendu — menuRef.current devient donc
+  // null, ce qui désactive automatiquement la détection de clic
+  // extérieur ci-dessous. Sans ça, tout clic dans la sous-modale était
+  // interprété comme un clic "en dehors" et fermait tout instantanément.
+  const showSubModal = showAddToPlaylist || showCredits;
 
   useEffect(() => {
     setOffline(isSongOffline(song._id));
@@ -80,15 +87,6 @@ export function SongContextMenu({
     onClose();
   }
 
-  function handleDownload() {
-    const a = document.createElement("a");
-    a.href = song.audioUrl;
-    a.download = `${song.title}.mp3`;
-    a.click();
-    pushToast("success", "Téléchargement lancé.");
-    onClose();
-  }
-
   async function handleToggleOffline() {
     try {
       if (offline) {
@@ -101,7 +99,7 @@ export function SongContextMenu({
           coverUrl: song.coverUrl,
           audioUrl: song.audioUrl,
           duration: song.duration,
-          artistName: song.artist.stageName,
+          artist: song.artist,
         });
         pushToast("success", "Disponible hors-ligne.");
       }
@@ -137,50 +135,56 @@ export function SongContextMenu({
 
   return (
     <>
-      <div
-        ref={menuRef}
-        style={clampedStyle}
-        className="fixed z-50 w-56 rounded-xl2 border border-border bg-surface py-1.5 shadow-2xl"
-      >
-        <MenuItem icon={ListPlus} label="Ajouter à la file d'attente" onClick={() => { enqueue(song); onClose(); }} />
-        <MenuItem icon={ListMusic} label="Ajouter à une playlist" onClick={() => setShowAddToPlaylist(true)} />
-        <MenuItem icon={Heart} label={liked ? "Ne plus aimer" : "J'aime"} onClick={handleLike} />
-        <MenuItem
-          icon={DownloadCloud}
-          label={offline ? "Retirer du hors-ligne" : "Écouter hors-ligne"}
-          onClick={handleToggleOffline}
-        />
-        <MenuItem icon={Download} label="Télécharger le fichier" onClick={handleDownload} />
-        <MenuItem icon={Share2} label="Partager" onClick={handleShare} />
-
-        <div className="my-1.5 h-px bg-border" />
-
-        <MenuItem icon={Info} label="Voir les crédits" onClick={() => setShowCredits(true)} />
-        <MenuItem
-          icon={Mic2}
-          label="Aller à l'artiste"
-          onClick={() => { router.push(`/artiste/${song.artist._id}`); onClose(); }}
-        />
-        {albumId && (
+      {!showSubModal && (
+        <div
+          ref={menuRef}
+          style={clampedStyle}
+          className="fixed z-50 w-56 rounded-xl2 border border-border bg-surface py-1.5 shadow-2xl max-h-[80vh] overflow-y-auto"
+        >
+          <MenuItem icon={ListPlus} label="Ajouter à la file d'attente" onClick={() => { enqueue(song); onClose(); }} />
+          <MenuItem icon={ListMusic} label="Ajouter à une playlist" onClick={() => setShowAddToPlaylist(true)} />
+          <MenuItem icon={Heart} label={liked ? "Ne plus aimer" : "J'aime"} onClick={handleLike} />
           <MenuItem
-            icon={Disc3}
-            label="Aller à l'album"
-            onClick={() => { router.push(`/album/${albumId}`); onClose(); }}
+            icon={DownloadCloud}
+            label={offline ? "Retirer du hors-ligne" : "Écouter hors-ligne"}
+            onClick={handleToggleOffline}
           />
-        )}
+          <MenuItem icon={Share2} label="Partager" onClick={handleShare} />
 
-        {canManage && (
-          <>
-            <div className="my-1.5 h-px bg-border" />
+          <div className="my-1.5 h-px bg-border" />
+
+          <MenuItem
+            icon={MessageCircle}
+            label="Voir le son et les commentaires"
+            onClick={() => { router.push(`/son/${song._id}`); onClose(); }}
+          />
+          <MenuItem icon={Info} label="Voir les crédits" onClick={() => setShowCredits(true)} />
+          <MenuItem
+            icon={Mic2}
+            label="Aller à l'artiste"
+            onClick={() => { router.push(`/artiste/${song.artist._id}`); onClose(); }}
+          />
+          {albumId && (
             <MenuItem
-              icon={Pencil}
-              label="Modifier"
-              onClick={() => { router.push(`/son/${song._id}/modifier`); onClose(); }}
+              icon={Disc3}
+              label="Aller à l'album"
+              onClick={() => { router.push(`/album/${albumId}`); onClose(); }}
             />
-            <MenuItem icon={Trash2} label="Supprimer" danger onClick={handleDelete} />
-          </>
-        )}
-      </div>
+          )}
+
+          {canManage && (
+            <>
+              <div className="my-1.5 h-px bg-border" />
+              <MenuItem
+                icon={Pencil}
+                label="Modifier"
+                onClick={() => { router.push(`/son/${song._id}/modifier`); onClose(); }}
+              />
+              <MenuItem icon={Trash2} label="Supprimer" danger onClick={handleDelete} />
+            </>
+          )}
+        </div>
+      )}
 
       {showAddToPlaylist && (
         <AddToPlaylistModal songId={song._id} onClose={() => { setShowAddToPlaylist(false); onClose(); }} />

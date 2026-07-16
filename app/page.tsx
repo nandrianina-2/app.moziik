@@ -90,7 +90,7 @@ export default function HomePage() {
           </p>
         )}
 
-        <div className="space-y-1 max-w-xl">
+        <div className="space-y-1 max-w-3xl">
           {songs.map((song, index) => (
             <SongRow key={song._id} song={song} queue={songs} index={index} onDeleted={loadSongs} />
           ))}
@@ -100,7 +100,7 @@ export default function HomePage() {
       {recommended.length > 0 && (
         <section className="mt-10">
           <h3 className="text-sm uppercase tracking-wide text-ink-muted mb-4">Recommandé pour toi</h3>
-          <div className="space-y-1 max-w-xl">
+          <div className="space-y-1 max-w-3xl">
             {recommended.map((song, index) => (
               <SongRow key={song._id} song={song} queue={recommended} index={index} />
             ))}

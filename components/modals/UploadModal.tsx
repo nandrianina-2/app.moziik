@@ -1,23 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { X, UploadCloud, Music as MusicIcon, AlertTriangle } from "lucide-react";
 import { uploadToCloudinaryClient } from "@/lib/cloudinaryClient";
 import { useToast } from "@/context/ToastProvider";
 import { FormField } from "@/components/ui/FormField";
 import { FeaturingPicker } from "@/components/modals/FeaturingPicker";
+import { ArtistSinglePicker } from "@/components/modals/ArtistSinglePicker";
 
 const GENRES = ["Afrobeat", "Salegy", "Hip-hop", "R&B", "Pop", "Zouk", "Reggae", "Autre"];
 
 type ArtistOption = { _id: string; stageName: string; verified?: boolean };
 
 export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUploaded: () => void }) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
   const pushToast = useToast();
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState(GENRES[0]);
   const [explicit, setExplicit] = useState(false);
   const [releaseDate, setReleaseDate] = useState("");
   const [featuring, setFeaturing] = useState<ArtistOption[]>([]);
+  const [targetArtist, setTargetArtist] = useState<ArtistOption | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
@@ -34,6 +39,10 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
     }
     if (!audioFile || !coverFile) {
       setError("Ajoute un fichier audio et une pochette.");
+      return;
+    }
+    if (isAdmin && !targetArtist) {
+      setError("Choisis l'artiste pour qui tu publies ce son.");
       return;
     }
 
@@ -56,6 +65,7 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
           duration: Math.round(audioUpload.duration ?? 0),
           releaseDate: releaseDate || new Date().toISOString(),
           featuringIds: featuring.map((a) => a._id),
+          artistId: isAdmin ? targetArtist?._id : undefined,
         }),
       });
 
@@ -101,6 +111,8 @@ export function UploadModal({ onClose, onUploaded }: { onClose: () => void; onUp
           )}
 
           <FormField label="Titre" required value={title} onChange={(e) => setTitle(e.target.value)} />
+
+          {isAdmin && <ArtistSinglePicker selected={targetArtist} onChange={setTargetArtist} />}
 
           <label className="block">
             <span className="text-sm text-ink-muted mb-1.5 block">Genre</span>

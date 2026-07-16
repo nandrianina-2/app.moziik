@@ -54,7 +54,7 @@ export default function AlbumDetailPage() {
   }
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-2xl">
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <div className="flex items-center gap-5 mb-8">
         <Image src={album.coverUrl} alt={album.title} width={120} height={120} className="rounded-xl2 object-cover shadow-lg" />
         <div>

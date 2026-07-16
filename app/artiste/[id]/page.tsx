@@ -74,7 +74,7 @@ export default function ArtistProfilePage() {
   }
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-2xl">
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <div className="flex items-center gap-5 mb-6">
         {artist.coverUrl && (
           <Image src={artist.coverUrl} alt={artist.stageName} width={96} height={96} className="rounded-full object-cover" />

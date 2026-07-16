@@ -61,7 +61,7 @@ export default function ChartsPage() {
   }, [period, type, pushToast]);
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-2xl">
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <h1 className="text-2xl font-display mb-6">Classements</h1>
 
       <div className="flex flex-wrap gap-2 mb-3">

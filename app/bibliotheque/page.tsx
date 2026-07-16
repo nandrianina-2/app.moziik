@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { ListMusic, Heart, WifiOff, Trash2 } from "lucide-react";
+import { ListMusic, Heart, WifiOff } from "lucide-react";
 import { SongRow } from "@/components/music/SongRow";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
-import { listOfflineSongs, removeOfflineSong, type OfflineSongMeta } from "@/lib/offlineCache";
+import { listOfflineSongs, type OfflineSongMeta } from "@/lib/offlineCache";
 import type { PlayableSong } from "@/context/PlayerProvider";
 
 type Playlist = { _id: string; title: string; coverUrl?: string; songs: string[] };
@@ -26,6 +26,8 @@ export default function LibraryPage() {
 
   useEffect(() => {
     loadOfflineSongs();
+    window.addEventListener("moziik-offline-change", loadOfflineSongs);
+    return () => window.removeEventListener("moziik-offline-change", loadOfflineSongs);
   }, []);
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function LibraryPage() {
   }, [status]);
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-2xl">
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <h1 className="text-2xl font-display mb-6">Ma bibliothèque</h1>
 
       <div className="flex gap-2 mb-6">
@@ -90,7 +92,7 @@ export default function LibraryPage() {
       )}
 
       {!loading && tab === "playlists" && status === "authenticated" && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {playlists.length === 0 && (
             <p className="text-sm text-ink-muted col-span-full">
               Pas encore de playlist — ajoute un son à une playlist depuis son menu &quot;...&quot;.
@@ -128,30 +130,14 @@ export default function LibraryPage() {
       )}
 
       {tab === "offline" && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {offlineSongs.length === 0 && (
             <p className="text-sm text-ink-muted">
               Aucun son téléchargé — utilise &quot;Écouter hors-ligne&quot; dans le menu &quot;...&quot; d&apos;un son.
             </p>
           )}
-          {offlineSongs.map((song) => (
-            <div key={song._id} className="flex items-center gap-3 rounded-xl2 border border-border bg-surface px-4 py-3">
-              <Image src={song.coverUrl} alt={song.title} width={40} height={40} className="rounded-lg object-cover" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm truncate">{song.title}</p>
-                <p className="text-xs text-ink-muted truncate">{song.artistName}</p>
-              </div>
-              <button
-                onClick={async () => {
-                  await removeOfflineSong(song._id);
-                  loadOfflineSongs();
-                }}
-                aria-label="Retirer du hors-ligne"
-                className="text-ink-muted hover:text-accent p-1.5"
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
+          {offlineSongs.map((song, index) => (
+            <SongRow key={song._id} song={song} queue={offlineSongs} index={index} />
           ))}
         </div>
       )}

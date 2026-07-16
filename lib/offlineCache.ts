@@ -14,7 +14,7 @@ export type OfflineSongMeta = {
   coverUrl: string;
   audioUrl: string;
   duration: number;
-  artistName: string;
+  artist: { _id: string; stageName: string; verified?: boolean };
 };
 
 function readIndex(): OfflineSongMeta[] {
@@ -28,6 +28,7 @@ function readIndex(): OfflineSongMeta[] {
 
 function writeIndex(items: OfflineSongMeta[]) {
   localStorage.setItem(INDEX_KEY, JSON.stringify(items));
+  window.dispatchEvent(new Event("moziik-offline-change"));
 }
 
 export function listOfflineSongs(): OfflineSongMeta[] {

@@ -39,7 +39,7 @@ export default function SearchPage() {
   }, [query]);
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-2xl">
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <h1 className="text-2xl font-display mb-6">Recherche</h1>
 
       <label className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 mb-8">

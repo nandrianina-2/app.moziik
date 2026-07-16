@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, Wallet, Shield, Mic2 } from "lucide-react";
+import { LogOut, Wallet, Shield, Mic2, Crown } from "lucide-react";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { BadgeChip } from "@/components/ui/BadgeChip";
 
@@ -14,6 +14,7 @@ const roleLabels: Record<string, string> = { member: "Membre", artist: "Artiste"
 export default function AccountPage() {
   const { data: session, status } = useSession();
   const [subscription, setSubscription] = useState<Subscription>(null);
+  const [hasPremium, setHasPremium] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +24,12 @@ export default function AccountPage() {
     }
     fetch("/api/me/subscription")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => data && setSubscription(data.subscription))
+      .then((data) => {
+        if (data) {
+          setSubscription(data.subscription);
+          setHasPremium(data.hasPremium);
+        }
+      })
       .finally(() => setLoading(false));
   }, [status]);
 
@@ -61,7 +67,11 @@ export default function AccountPage() {
         <p className="flex items-center gap-1.5 text-sm font-medium mb-2">
           <Wallet size={15} className="text-accent" /> Abonnement
         </p>
-        {subscription ? (
+        {session.user.role === "admin" ? (
+          <p className="flex items-center gap-1.5 text-xs text-verified">
+            <Crown size={13} /> Accès Premium illimité (compte admin)
+          </p>
+        ) : subscription ? (
           <p className="text-xs text-ink-muted">
             Plan {subscription.plan === "premium_annual" ? "Premium annuel" : "Premium"} — statut : {subscription.status}
             <br />
@@ -70,18 +80,28 @@ export default function AccountPage() {
         ) : (
           <p className="text-xs text-ink-muted mb-3">Tu n&apos;as pas encore d&apos;abonnement actif.</p>
         )}
-        <Link href="/abonnement" className="inline-block text-xs text-accent hover:underline mt-2">
-          {subscription ? "Gérer mon abonnement" : "Passer en Premium"}
-        </Link>
+        {session.user.role !== "admin" && (
+          <Link href="/abonnement" className="inline-block text-xs text-accent hover:underline mt-2">
+            {hasPremium ? "Gérer mon abonnement" : "Passer en Premium"}
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 mb-6">
         {session.user.role === "artist" && (
           <Link
+            href="/artiste/gestion"
+            className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm hover:border-accent"
+          >
+            <Mic2 size={15} className="text-ink-muted" /> Mon espace artiste
+          </Link>
+        )}
+        {session.user.role === "artist" && (
+          <Link
             href="/artiste/revenus"
             className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm hover:border-accent"
           >
-            <Mic2 size={15} className="text-ink-muted" /> Mes revenus d&apos;artiste
+            <Wallet size={15} className="text-ink-muted" /> Mes revenus d&apos;artiste
           </Link>
         )}
         {session.user.role === "admin" && (
