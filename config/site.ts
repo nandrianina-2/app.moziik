@@ -6,7 +6,7 @@
 export type SiteConfig = {
   siteName: string;
   tagline: string;
-  logoUrl: string; // hébergé sur Cloudinary, modifiable dans les paramètres admin
+  logoUrl: string; // hébergé sur Cloudinary, modifiable dans /admin/parametres — utilisé dans la sidebar, le header mobile et comme icône PWA
   supportEmail: string;
   currency: {
     international: "USD" | "EUR";
@@ -17,7 +17,7 @@ export type SiteConfig = {
 export const defaultSiteConfig: SiteConfig = {
   siteName: "Moziik",
   tagline: "Écoute, découvre, soutiens tes artistes.",
-  logoUrl: "/logo-placeholder.svg",
+  logoUrl: "/icon-mark.png",
   supportEmail: "contact@moziik.app",
   currency: {
     international: "USD",

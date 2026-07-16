@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Home, Search, Library, Radio, CalendarDays, User, CreditCard, Trophy } from "lucide-react";
 import { useSiteConfig } from "@/context/SiteConfigProvider";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
@@ -24,7 +25,11 @@ export function Sidebar() {
     <aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 border-r border-border h-screen sticky top-0 px-4 py-6">
       <div className="flex items-center justify-between px-2 mb-8">
         <div className="flex items-center gap-2">
-          <EqualizerLoader size="sm" />
+          {siteConfig.logoUrl ? (
+            <Image src={siteConfig.logoUrl} alt="" width={24} height={24} className="h-6 w-6 shrink-0 object-contain" priority />
+          ) : (
+            <EqualizerLoader size="sm" />
+          )}
           <span className="font-display text-lg tracking-tight">
             {siteConfig.siteName}
           </span>

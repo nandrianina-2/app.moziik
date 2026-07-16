@@ -15,7 +15,7 @@ import {
  *
  * Chaîne du signal :
  * source -> [10 filtres peaking] -> low-shelf (bass boost) -> gain de
- * compensation (loudness) -> destination
+ * compensation (loudness) -> limiteur (anti-écrêtage) -> destination
  */
 export function useAudioEngine() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -23,6 +23,7 @@ export function useAudioEngine() {
   const filtersRef = useRef<BiquadFilterNode[]>([]);
   const bassBoostRef = useRef<BiquadFilterNode | null>(null);
   const makeupGainRef = useRef<GainNode | null>(null);
+  const limiterRef = useRef<DynamicsCompressorNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   useEffect(() => {
@@ -56,7 +57,19 @@ export function useAudioEngine() {
     const makeupGain = ctx.createGain();
     makeupGain.gain.value = 1;
 
-    // source -> filtre 1 -> ... -> filtre 10 -> bassBoost -> makeupGain -> destination
+    // Limiteur final : sans lui, additionner plusieurs bandes boostées +
+    // le bass boost + le gain de compensation peut facilement dépasser
+    // 0 dBFS et provoquer un écrêtage numérique (le son "bizarre"/saturé
+    // signalé en boostant l'égaliseur). Poweramp fait la même chose en
+    // interne pour permettre des boosts agressifs sans distorsion.
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -1; // dB : n'intervient que juste avant l'écrêtage
+    limiter.knee.value = 0; // limiteur franc, pas de compression progressive
+    limiter.ratio.value = 20; // quasi brickwall
+    limiter.attack.value = 0.002; // très rapide pour attraper les crêtes
+    limiter.release.value = 0.15;
+
+    // source -> filtre 1 -> ... -> filtre 10 -> bassBoost -> makeupGain -> limiter -> destination
     let node: AudioNode = source;
     filters.forEach((filter) => {
       node.connect(filter);
@@ -64,12 +77,14 @@ export function useAudioEngine() {
     });
     node.connect(bassBoost);
     bassBoost.connect(makeupGain);
-    makeupGain.connect(ctx.destination);
+    makeupGain.connect(limiter);
+    limiter.connect(ctx.destination);
 
     audioContextRef.current = ctx;
     filtersRef.current = filters;
     bassBoostRef.current = bassBoost;
     makeupGainRef.current = makeupGain;
+    limiterRef.current = limiter;
     sourceRef.current = source;
   }
 

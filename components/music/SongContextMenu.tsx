@@ -27,12 +27,15 @@ export function SongContextMenu({
   song,
   position,
   canManage,
+  hideOffline,
   onClose,
   onDeleted,
 }: {
   song: PlayableSong;
   position: Position;
   canManage?: boolean;
+  /** Masque l'entrée "Écouter hors-ligne" quand un bouton dédié l'affiche déjà ailleurs (ex. mini-player). */
+  hideOffline?: boolean;
   onClose: () => void;
   onDeleted?: () => void;
 }) {
@@ -144,11 +147,13 @@ export function SongContextMenu({
           <MenuItem icon={ListPlus} label="Ajouter à la file d'attente" onClick={() => { enqueue(song); onClose(); }} />
           <MenuItem icon={ListMusic} label="Ajouter à une playlist" onClick={() => setShowAddToPlaylist(true)} />
           <MenuItem icon={Heart} label={liked ? "Ne plus aimer" : "J'aime"} onClick={handleLike} />
-          <MenuItem
-            icon={DownloadCloud}
-            label={offline ? "Retirer du hors-ligne" : "Écouter hors-ligne"}
-            onClick={handleToggleOffline}
-          />
+          {!hideOffline && (
+            <MenuItem
+              icon={DownloadCloud}
+              label={offline ? "Retirer du hors-ligne" : "Écouter hors-ligne"}
+              onClick={handleToggleOffline}
+            />
+          )}
           <MenuItem icon={Share2} label="Partager" onClick={handleShare} />
 
           <div className="my-1.5 h-px bg-border" />

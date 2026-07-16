@@ -14,8 +14,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     theme_color: "#FF6B4A",
     icons: [
       {
-        // Le logo configuré par l'admin sert aussi d'icône PWA. Pour un
-        // rendu optimal sur tous les appareils, prévoir un logo carré
+        // Le logo configuré par l'admin (icon-mark carré par défaut) sert
+        // aussi d'icône PWA. Pour un rendu optimal, prévoir un logo carré
         // d'au moins 512x512 dans /admin/parametres.
         src: config.logoUrl || "/icon-512.png",
         sizes: "512x512",

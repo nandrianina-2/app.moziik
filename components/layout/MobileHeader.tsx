@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { Menu, User } from "lucide-react";
 import { useSiteConfig } from "@/context/SiteConfigProvider";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 
 export function MobileHeader() {
   const { data: session } = useSession();
@@ -24,7 +26,14 @@ export function MobileHeader() {
           <Menu size={20} />
         </button>
 
-        <span className="font-display text-base truncate">{siteConfig.siteName}</span>
+        <span className="flex items-center gap-1.5 min-w-0">
+          {siteConfig.logoUrl ? (
+            <Image src={siteConfig.logoUrl} alt="" width={20} height={20} className="h-5 w-5 shrink-0 object-contain" priority />
+          ) : (
+            <EqualizerLoader size="sm" />
+          )}
+          <span className="font-display text-base truncate">{siteConfig.siteName}</span>
+        </span>
 
         <div className="flex items-center gap-1">
           {session?.user && <NotificationBell />}
