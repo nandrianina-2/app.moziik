@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Plus } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { SongRow } from "@/components/music/SongRow";
 import { UploadModal } from "@/components/modals/UploadModal";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
@@ -71,7 +70,6 @@ export default function HomePage() {
               <Plus size={16} /> Publier
             </button>
           )}
-          <ThemeToggle />
         </div>
       </header>
 

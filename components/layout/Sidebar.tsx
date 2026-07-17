@@ -6,6 +6,7 @@ import { Home, Search, Library, Radio, CalendarDays, User, CreditCard, Trophy } 
 import { useSiteConfig } from "@/context/SiteConfigProvider";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const links = [
   { href: "/", label: "Accueil", icon: Home },
@@ -34,7 +35,10 @@ export function Sidebar() {
             {siteConfig.siteName}
           </span>
         </div>
-        <NotificationBell />
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <NotificationBell />
+        </div>
       </div>
       <nav className="flex flex-col gap-1">
         {links.map(({ href, label, icon: Icon }) => (

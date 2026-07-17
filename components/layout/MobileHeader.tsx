@@ -8,6 +8,7 @@ import { Menu, User } from "lucide-react";
 import { useSiteConfig } from "@/context/SiteConfigProvider";
 import { MobileDrawer } from "@/components/layout/MobileDrawer";
 import { NotificationBell } from "@/components/ui/NotificationBell";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 
 export function MobileHeader() {
@@ -36,6 +37,7 @@ export function MobileHeader() {
         </span>
 
         <div className="flex items-center gap-1">
+          <ThemeToggle />
           {session?.user && <NotificationBell />}
           <Link
             href="/compte"
