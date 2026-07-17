@@ -17,9 +17,11 @@ import {
 } from "lucide-react";
 import { usePlayer, type PlayableSong } from "@/context/PlayerProvider";
 import { useToast } from "@/context/ToastProvider";
+import { useOnlineStatus } from "@/context/OnlineStatusProvider";
 import { AddToPlaylistModal } from "@/components/modals/AddToPlaylistModal";
 import { CreditsModal } from "@/components/modals/CreditsModal";
-import { downloadSongForOffline, isSongOffline, removeOfflineSong } from "@/lib/offlineCache";
+import { downloadSongForOffline, isSongOffline, removeOfflineSong, queuePendingDownload } from "@/lib/offlineCache";
+import { enqueueSyncAction } from "@/lib/syncQueue";
 
 type Position = { x: number; y: number };
 
@@ -41,6 +43,7 @@ export function SongContextMenu({
 }) {
   const router = useRouter();
   const pushToast = useToast();
+  const { isOnline } = useOnlineStatus();
   const { enqueue } = usePlayer();
   const menuRef = useRef<HTMLDivElement>(null);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
@@ -56,7 +59,7 @@ export function SongContextMenu({
   const showSubModal = showAddToPlaylist || showCredits;
 
   useEffect(() => {
-    setOffline(isSongOffline(song._id));
+    isSongOffline(song._id).then(setOffline);
   }, [song._id]);
 
   useEffect(() => {
@@ -78,6 +81,14 @@ export function SongContextMenu({
   };
 
   async function handleLike() {
+    const nextLiked = !liked;
+    if (!isOnline) {
+      setLiked(nextLiked);
+      await enqueueSyncAction({ type: "like_song", songId: song._id, liked: nextLiked });
+      pushToast("info", "Sera synchronisé à la reconnexion.");
+      onClose();
+      return;
+    }
     try {
       const res = await fetch(`/api/songs/${song._id}/like`, { method: "POST" });
       if (!res.ok) throw new Error();
@@ -95,6 +106,16 @@ export function SongContextMenu({
       if (offline) {
         await removeOfflineSong(song._id);
         pushToast("success", "Retiré du mode hors-ligne.");
+      } else if (!isOnline) {
+        await queuePendingDownload({
+          _id: song._id,
+          title: song.title,
+          coverUrl: song.coverUrl,
+          audioUrl: song.audioUrl,
+          duration: song.duration,
+          artist: song.artist,
+        });
+        pushToast("info", "En attente — le téléchargement démarrera à la reconnexion.");
       } else {
         await downloadSongForOffline({
           _id: song._id,

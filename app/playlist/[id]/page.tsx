@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Play, ListMusic, Globe, Lock } from "lucide-react";
+import { Play, ListMusic, Globe, Lock, DownloadCloud, Loader2 } from "lucide-react";
 import { SongRow } from "@/components/music/SongRow";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { usePlayer, type PlayableSong } from "@/context/PlayerProvider";
 import { useToast } from "@/context/ToastProvider";
+import { downloadPlaylistForOffline } from "@/lib/offlineCache";
 
 type PlaylistDetail = {
   _id: string;
@@ -27,6 +28,21 @@ export default function PlaylistDetailPage() {
   const { playQueue } = usePlayer();
   const [playlist, setPlaylist] = useState<PlaylistDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ done: 0, total: 0 });
+
+  async function handleDownloadPlaylist() {
+    if (!playlist) return;
+    setDownloading(true);
+    try {
+      await downloadPlaylistForOffline(playlist._id, (done, total) => setDownloadProgress({ done, total }));
+      pushToast("success", "Playlist disponible hors-ligne.");
+    } catch (err) {
+      pushToast("error", err instanceof Error ? err.message : "Échec du téléchargement.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function load() {
     try {
@@ -78,12 +94,30 @@ export default function PlaylistDetailPage() {
           </p>
 
           {playlist.songs.length > 0 && (
-            <button
-              onClick={() => playQueue(playlist.songs, 0)}
-              className="flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-medium text-base hover:bg-accent-hover"
-            >
-              <Play size={14} fill="currentColor" /> Écouter tout
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => playQueue(playlist.songs, 0)}
+                className="flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-medium text-base hover:bg-accent-hover"
+              >
+                <Play size={14} fill="currentColor" /> Écouter tout
+              </button>
+              <button
+                onClick={handleDownloadPlaylist}
+                disabled={downloading}
+                className="flex items-center gap-2 rounded-full border border-border px-5 py-2 text-sm font-medium text-ink-muted hover:border-accent hover:text-accent disabled:opacity-60"
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    {downloadProgress.total > 0 && `${downloadProgress.done}/${downloadProgress.total}`}
+                  </>
+                ) : (
+                  <>
+                    <DownloadCloud size={14} /> Télécharger tout
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>

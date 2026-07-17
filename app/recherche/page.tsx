@@ -3,14 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search as SearchIcon, BadgeCheck } from "lucide-react";
+import { Search as SearchIcon, BadgeCheck, WifiOff } from "lucide-react";
 import { SongRow } from "@/components/music/SongRow";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
+import { useOnlineStatus } from "@/context/OnlineStatusProvider";
+import { listOfflineSongs } from "@/lib/offlineCache";
 import type { PlayableSong } from "@/context/PlayerProvider";
 
 type ArtistResult = { _id: string; stageName: string; verified?: boolean; coverUrl?: string };
 
 export default function SearchPage() {
+  const { isOnline } = useOnlineStatus();
   const [query, setQuery] = useState("");
   const [songs, setSongs] = useState<PlayableSong[]>([]);
   const [artists, setArtists] = useState<ArtistResult[]>([]);
@@ -25,6 +28,18 @@ export default function SearchPage() {
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
+        if (!isOnline) {
+          // Recherche locale : uniquement parmi les sons déjà
+          // téléchargés pour l'écoute hors-ligne.
+          const offline = await listOfflineSongs();
+          const q = query.trim().toLowerCase();
+          const matches = offline.filter(
+            (s) => s.title.toLowerCase().includes(q) || s.artist.stageName.toLowerCase().includes(q)
+          );
+          setSongs(matches);
+          setArtists([]);
+          return;
+        }
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
         if (res.ok) {
           const data = await res.json();
@@ -36,11 +51,17 @@ export default function SearchPage() {
       }
     }, 300);
     return () => clearTimeout(timeout);
-  }, [query]);
+  }, [query, isOnline]);
 
   return (
     <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <h1 className="text-2xl font-display mb-6">Recherche</h1>
+
+      {!isOnline && (
+        <p className="flex items-center gap-1.5 text-xs text-accent mb-4">
+          <WifiOff size={12} /> Hors-ligne — recherche limitée à tes sons téléchargés
+        </p>
+      )}
 
       <label className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 mb-8">
         <SearchIcon size={18} className="text-ink-muted" />

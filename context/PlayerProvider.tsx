@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useAudioEngine } from "@/components/player/hooks/useAudioEngine";
+import { markOfflineSongPlayed } from "@/lib/offlineCache";
+import { idbPut, STORES } from "@/lib/offlineDb";
+import { enqueueSyncAction } from "@/lib/syncQueue";
 
 export type PlayableSong = {
   _id: string;
@@ -103,11 +106,30 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (progress >= PLAY_RECORD_THRESHOLD_SECONDS && !hasRecordedPlay.current && currentSong) {
       hasRecordedPlay.current = true;
+
+      // Historique local (point 10 du cahier des charges hors-ligne) :
+      // toujours écrit, en ligne comme hors-ligne.
+      idbPut(STORES.history, {
+        songId: currentSong._id,
+        title: currentSong.title,
+        artistName: currentSong.artist.stageName,
+        playedAt: Date.now(),
+      }).catch(() => {});
+      markOfflineSongPlayed(currentSong._id).catch(() => {});
+
       fetch(`/api/songs/${currentSong._id}/play`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ secondsListened: progress, completed: true, device: "web" }),
-      }).catch(() => {});
+      }).catch(() => {
+        // Hors-ligne : on ne perd pas l'écoute, elle est rejouée à la reconnexion.
+        enqueueSyncAction({
+          type: "record_play",
+          songId: currentSong._id,
+          secondsListened: progress,
+          completed: true,
+        });
+      });
     }
   }, [progress, currentSong]);
 

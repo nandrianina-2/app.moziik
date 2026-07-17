@@ -172,3 +172,52 @@ testable indépendamment, avant de passer à la suivante.
   toutes les routes (y compris espace artiste / administration)
 - Plusieurs pages élargies sur desktop (grilles avec plus de colonnes,
   largeur de contenu augmentée) pour mieux exploiter l'espace
+
+## Phase 10 — Mode hors-ligne avancé (base solide posée)
+Base reconstruite sur **IndexedDB** (`lib/offlineDb.ts`) au lieu du
+simple localStorage initial :
+- **Téléchargement** : sons individuels, **albums entiers**,
+  **playlists entières** (`downloadAlbumForOffline`,
+  `downloadPlaylistForOffline`), avec progression
+- **Téléchargement différé** : si on clique hors-ligne, la demande est
+  mise en attente (`queuePendingDownload`) et démarre seule à la
+  reconnexion — la reprise est "recommencer proprement", pas une
+  reprise octet-par-octet (non réaliste avec Cache Storage)
+- **Qualité audio configurable** (64/128/320 kb/s, transformation
+  Cloudinary à la volée) + **Wi-Fi uniquement** pour les téléchargements
+- **Gestion de l'espace** (`/bibliotheque` → onglet Stockage) :
+  estimation d'usage, nettoyage "non écouté depuis 90 jours", vidage
+  complet
+- **File de synchronisation** (`lib/syncQueue.ts`) : favoris,
+  commentaires, création/renommage/suppression de playlist, ajout/retrait
+  de son dans une playlist, écoutes — tout ce qui est fait hors-ligne
+  est rejoué automatiquement à la reconnexion, dans l'ordre
+- **Commentaires hors-ligne** : écrits localement avec statut "en
+  attente", publiés à la reconnexion
+- **Historique local** (IndexedDB) à chaque écoute, en ligne comme
+  hors-ligne
+- **Recherche locale** : bascule automatiquement sur les sons
+  téléchargés quand il n'y a pas de réseau
+- **Cache des profils d'artistes** consultés, avec repli automatique
+  dessus si le réseau est indisponible
+- **Notification locale** (Notification API du navigateur) à la fin
+  d'un téléchargement d'album/playlist, si l'onglet n'est pas au premier plan
+- **Bannière "hors-ligne"** globale + `OnlineStatusProvider` déclenchant
+  la synchronisation automatique au retour du réseau
+
+### Volontairement simplifié pour l'instant
+- **Chiffrement des fichiers téléchargés** : non implémenté (le Cache
+  Storage stocke les réponses telles quelles). Le faire correctement
+  demanderait de chiffrer en Blob via `crypto.subtle` et de déchiffrer
+  à la volée pendant la lecture — faisable mais complexe, à traiter en
+  tâche dédiée si c'est un vrai besoin de sécurité pour ce projet.
+- **Reprise de téléchargement octet-par-octet** : non implémenté (voir
+  ci-dessus, on relance proprement au lieu de reprendre à 61%).
+- **Notifications différées côté serveur (push)** : seule la
+  notification locale (onglet fermé/en fond) est en place ; un vrai
+  système push nécessiterait un abonnement Push API + clés VAPID +
+  logique serveur dédiée.
+- **Synchronisation multi-appareils** : déjà couverte de fait, puisque
+  toute action synchronisée (Phase précédente comme celle-ci) passe
+  par le serveur — donc visible sur tous les appareils dès qu'ils sont
+  en ligne. Pas de mécanisme supplémentaire nécessaire.

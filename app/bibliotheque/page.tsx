@@ -4,28 +4,46 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { ListMusic, Heart, WifiOff } from "lucide-react";
+import { ListMusic, Heart, WifiOff, HardDrive, Trash2, Wifi, Gauge } from "lucide-react";
 import { SongRow } from "@/components/music/SongRow";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
-import { listOfflineSongs, type OfflineSongMeta } from "@/lib/offlineCache";
+import {
+  listOfflineSongs,
+  cleanupUnplayedSince,
+  clearAllOfflineSongs,
+  getStorageUsage,
+  type OfflineSongMeta,
+} from "@/lib/offlineCache";
+import {
+  getOfflineSettings,
+  setOfflineSettings,
+  type OfflineSettings,
+  type AudioQuality,
+} from "@/lib/offlineSettings";
+import { useToast } from "@/context/ToastProvider";
 import type { PlayableSong } from "@/context/PlayerProvider";
 
 type Playlist = { _id: string; title: string; coverUrl?: string; songs: string[] };
 
 export default function LibraryPage() {
   const { status } = useSession();
-  const [tab, setTab] = useState<"playlists" | "liked" | "offline">("playlists");
+  const pushToast = useToast();
+  const [tab, setTab] = useState<"playlists" | "liked" | "offline" | "storage">("playlists");
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [likedSongs, setLikedSongs] = useState<PlayableSong[]>([]);
   const [offlineSongs, setOfflineSongs] = useState<OfflineSongMeta[]>([]);
+  const [usage, setUsage] = useState<{ usedMB: number; quotaMB: number } | null>(null);
+  const [settings, setSettings] = useState<OfflineSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
-  function loadOfflineSongs() {
-    setOfflineSongs(listOfflineSongs());
+  async function loadOfflineSongs() {
+    setOfflineSongs(await listOfflineSongs());
+    setUsage(await getStorageUsage());
   }
 
   useEffect(() => {
     loadOfflineSongs();
+    getOfflineSettings().then(setSettings);
     window.addEventListener("moziik-offline-change", loadOfflineSongs);
     return () => window.removeEventListener("moziik-offline-change", loadOfflineSongs);
   }, []);
@@ -50,11 +68,26 @@ export default function LibraryPage() {
     load();
   }, [status]);
 
+  async function updateSetting<K extends keyof OfflineSettings>(key: K, value: OfflineSettings[K]) {
+    const next = await setOfflineSettings({ [key]: value });
+    setSettings(next);
+  }
+
+  async function handleCleanup() {
+    const removed = await cleanupUnplayedSince(90);
+    pushToast("success", `${removed} son(s) non écouté(s) depuis 90 jours supprimé(s).`);
+  }
+
+  async function handleClearAll() {
+    await clearAllOfflineSongs();
+    pushToast("success", "Cache hors-ligne vidé.");
+  }
+
   return (
     <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <h1 className="text-2xl font-display mb-6">Ma bibliothèque</h1>
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setTab("playlists")}
           className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
@@ -79,9 +112,17 @@ export default function LibraryPage() {
         >
           <WifiOff size={14} /> Hors-ligne
         </button>
+        <button
+          onClick={() => setTab("storage")}
+          className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-colors ${
+            tab === "storage" ? "bg-accent text-base border-accent" : "border-border text-ink-muted hover:border-accent"
+          }`}
+        >
+          <HardDrive size={14} /> Stockage
+        </button>
       </div>
 
-      {loading && (
+      {loading && tab !== "offline" && tab !== "storage" && (
         <div className="py-10 grid place-items-center">
           <EqualizerLoader />
         </div>
@@ -133,12 +174,94 @@ export default function LibraryPage() {
         <div className="space-y-1">
           {offlineSongs.length === 0 && (
             <p className="text-sm text-ink-muted">
-              Aucun son téléchargé — utilise &quot;Écouter hors-ligne&quot; dans le menu &quot;...&quot; d&apos;un son.
+              Aucun son téléchargé — utilise &quot;Écouter hors-ligne&quot; dans le menu &quot;...&quot; d&apos;un son,
+              ou télécharge un album/une playlist entière depuis sa page.
             </p>
           )}
           {offlineSongs.map((song, index) => (
             <SongRow key={song._id} song={song} queue={offlineSongs} index={index} />
           ))}
+        </div>
+      )}
+
+      {tab === "storage" && settings && (
+        <div className="max-w-md space-y-6">
+          <div className="rounded-xl2 border border-border bg-surface p-4">
+            <p className="flex items-center gap-1.5 text-sm font-medium mb-2">
+              <HardDrive size={15} className="text-accent" /> Espace utilisé
+            </p>
+            {usage ? (
+              <>
+                <p className="text-xs text-ink-muted mb-2">
+                  {usage.usedMB} Mo utilisés sur {usage.quotaMB} Mo disponibles (estimation du navigateur)
+                </p>
+                <div className="h-2 rounded-full bg-base overflow-hidden">
+                  <div
+                    className="h-full bg-accent"
+                    style={{ width: `${Math.min(100, (usage.usedMB / Math.max(usage.quotaMB, 1)) * 100)}%` }}
+                  />
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-ink-muted">Estimation non disponible sur ce navigateur.</p>
+            )}
+            <p className="text-xs text-ink-muted mt-3">{offlineSongs.length} son(s) téléchargé(s)</p>
+          </div>
+
+          <div className="rounded-xl2 border border-border bg-surface p-4 space-y-3">
+            <p className="text-sm font-medium">Nettoyage</p>
+            <button
+              onClick={handleCleanup}
+              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-border py-2 text-xs text-ink-muted hover:border-accent hover:text-accent"
+            >
+              <Trash2 size={13} /> Supprimer les sons non écoutés depuis 90 jours
+            </button>
+            <button
+              onClick={handleClearAll}
+              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-accent/40 py-2 text-xs text-accent hover:bg-accent/10"
+            >
+              <Trash2 size={13} /> Vider tout le cache hors-ligne
+            </button>
+          </div>
+
+          <div className="rounded-xl2 border border-border bg-surface p-4 space-y-4">
+            <p className="text-sm font-medium">Paramètres de téléchargement</p>
+
+            <label className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-1.5 text-ink-muted">
+                <Wifi size={14} /> Télécharger uniquement en Wi-Fi
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.wifiOnlyDownload}
+                onChange={(e) => updateSetting("wifiOnlyDownload", e.target.checked)}
+              />
+            </label>
+
+            <label className="flex items-center justify-between text-sm">
+              <span className="text-ink-muted">Télécharger auto. favoris & récents</span>
+              <input
+                type="checkbox"
+                checked={settings.autoDownloadFavorites}
+                onChange={(e) => updateSetting("autoDownloadFavorites", e.target.checked)}
+              />
+            </label>
+
+            <label className="block">
+              <span className="flex items-center gap-1.5 text-sm text-ink-muted mb-1.5">
+                <Gauge size={14} /> Qualité audio hors-ligne
+              </span>
+              <select
+                value={settings.audioQuality}
+                onChange={(e) => updateSetting("audioQuality", e.target.value as AudioQuality)}
+                className="w-full rounded-xl border border-border bg-base px-3.5 py-2 text-sm outline-none"
+              >
+                <option value="low">Faible (64 kb/s)</option>
+                <option value="medium">Moyenne (128 kb/s)</option>
+                <option value="high">Élevée (320 kb/s)</option>
+              </select>
+            </label>
+          </div>
         </div>
       )}
     </div>

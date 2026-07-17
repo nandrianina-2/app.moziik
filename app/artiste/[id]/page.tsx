@@ -9,6 +9,7 @@ import { BadgeCheck, Users, Disc3 } from "lucide-react";
 import { SongRow } from "@/components/music/SongRow";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { useToast } from "@/context/ToastProvider";
+import { idbGet, idbPut, STORES } from "@/lib/offlineDb";
 import type { PlayableSong } from "@/context/PlayerProvider";
 
 type ArtistProfile = {
@@ -23,6 +24,8 @@ type ArtistProfile = {
 
 type AlbumSummary = { _id: string; title: string; coverUrl: string };
 
+type CachedArtistPage = { _id: string; artist: ArtistProfile; songs: PlayableSong[]; albums: AlbumSummary[] };
+
 export default function ArtistProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { status } = useSession();
@@ -32,6 +35,7 @@ export default function ArtistProfilePage() {
   const [albums, setAlbums] = useState<AlbumSummary[]>([]);
   const [following, setFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fromCache, setFromCache] = useState(false);
 
   async function load() {
     try {
@@ -41,8 +45,20 @@ export default function ArtistProfilePage() {
       setArtist(data.artist);
       setSongs(data.songs);
       setAlbums(data.albums);
+      setFromCache(false);
+      // Cache pour un accès hors-ligne ultérieur (point 3 du cahier des charges).
+      idbPut<CachedArtistPage>(STORES.artists, { _id: id, artist: data.artist, songs: data.songs, albums: data.albums }).catch(() => {});
     } catch {
-      pushToast("error", "Impossible de charger ce profil.");
+      // Hors-ligne ou requête échouée : on retombe sur la dernière version consultée.
+      const cached = await idbGet<CachedArtistPage>(STORES.artists, id);
+      if (cached) {
+        setArtist(cached.artist);
+        setSongs(cached.songs);
+        setAlbums(cached.albums);
+        setFromCache(true);
+      } else {
+        pushToast("error", "Impossible de charger ce profil.");
+      }
     } finally {
       setLoading(false);
     }
@@ -75,6 +91,9 @@ export default function ArtistProfilePage() {
 
   return (
     <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
+      {fromCache && (
+        <p className="text-xs text-accent mb-4">Affiché depuis la version enregistrée (hors-ligne).</p>
+      )}
       <div className="flex items-center gap-5 mb-6">
         {artist.coverUrl && (
           <Image src={artist.coverUrl} alt={artist.stageName} width={96} height={96} className="rounded-full object-cover" />

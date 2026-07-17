@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { AuthProvider } from "@/context/AuthProvider";
 import { ToastProvider } from "@/context/ToastProvider";
+import { OnlineStatusProvider } from "@/context/OnlineStatusProvider";
 import { PlayerProvider } from "@/context/PlayerProvider";
 import { SiteConfigProvider } from "@/context/SiteConfigProvider";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -12,6 +13,7 @@ import { MobileNav } from "@/components/layout/MobileNav";
 import { MiniPlayerBar } from "@/components/player/MiniPlayerBar";
 import { FullPlayerPage } from "@/components/player/FullPlayerPage";
 import { FloatingInstallButton } from "@/components/ui/FloatingInstallButton";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { getSiteConfig } from "@/lib/siteConfig";
 
 const display = Sora({ subsets: ["latin"], variable: "--font-display" });
@@ -37,17 +39,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <ThemeProvider>
               <ToastProvider>
-                <PlayerProvider>
-                  <MobileHeader />
-                  <div className="flex min-h-screen">
-                    <Sidebar />
-                    <main className="flex-1 pt-14 md:pt-0 pb-40 md:pb-24">{children}</main>
-                  </div>
-                  <MiniPlayerBar />
-                  <FullPlayerPage />
-                  <FloatingInstallButton />
-                  <MobileNav />
-                </PlayerProvider>
+                <OnlineStatusProvider>
+                  <PlayerProvider>
+                    <MobileHeader />
+                    <OfflineBanner />
+                    <div className="flex min-h-screen">
+                      <Sidebar />
+                      <main className="flex-1 pt-14 md:pt-0 pb-40 md:pb-24">{children}</main>
+                    </div>
+                    <MiniPlayerBar />
+                    <FullPlayerPage />
+                    <FloatingInstallButton />
+                    <MobileNav />
+                  </PlayerProvider>
+                </OnlineStatusProvider>
               </ToastProvider>
             </ThemeProvider>
           </AuthProvider>

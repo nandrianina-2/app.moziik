@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Smile, Meh, Frown, Send } from "lucide-react";
+import { Smile, Meh, Frown, Send, Clock } from "lucide-react";
 import { useToast } from "@/context/ToastProvider";
+import { useOnlineStatus } from "@/context/OnlineStatusProvider";
+import { enqueueSyncAction } from "@/lib/syncQueue";
 
 type SongComment = {
   _id: string;
@@ -11,6 +13,7 @@ type SongComment = {
   sentiment?: "positive" | "neutral" | "negative";
   createdAt: string;
   user: { name: string; avatarUrl?: string };
+  pending?: boolean; // écrit hors-ligne, pas encore synchronisé
 };
 
 const sentimentIcon = {
@@ -26,8 +29,9 @@ const sentimentColor = {
 };
 
 export function CommentsSection({ songId }: { songId: string }) {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const pushToast = useToast();
+  const { isOnline } = useOnlineStatus();
   const [comments, setComments] = useState<SongComment[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -54,6 +58,23 @@ export function CommentsSection({ songId }: { songId: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim()) return;
+
+    if (!isOnline) {
+      setComments((prev) => [
+        {
+          _id: `local-${Date.now()}`,
+          text,
+          createdAt: new Date().toISOString(),
+          user: { name: session?.user?.name ?? "Toi" },
+          pending: true,
+        },
+        ...prev,
+      ]);
+      await enqueueSyncAction({ type: "add_comment", songId, text });
+      setText("");
+      pushToast("info", "Commentaire enregistré, sera publié à la reconnexion.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -116,6 +137,11 @@ export function CommentsSection({ songId }: { songId: string }) {
                   <span className="font-medium">{comment.user.name}</span>{" "}
                   <span className="text-ink-muted">{comment.text}</span>
                 </p>
+                {comment.pending && (
+                  <p className="flex items-center gap-1 text-[11px] text-ink-muted mt-0.5">
+                    <Clock size={10} /> En attente de connexion
+                  </p>
+                )}
               </div>
               {comment.sentiment && (
                 <Icon size={14} className={`shrink-0 mt-1 ${sentimentColor[comment.sentiment]}`} />

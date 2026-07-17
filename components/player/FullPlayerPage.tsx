@@ -21,11 +21,12 @@ import {
 } from "lucide-react";
 import { usePlayer } from "@/context/PlayerProvider";
 import { useToast } from "@/context/ToastProvider";
+import { useOnlineStatus } from "@/context/OnlineStatusProvider";
 import { SeekBar } from "@/components/player/SeekBar";
 import { EQPanel } from "@/components/player/panels/EQPanel";
 import { QueuePanel } from "@/components/player/panels/QueuePanel";
 import { SongContextMenu } from "@/components/music/SongContextMenu";
-import { downloadSongForOffline, isSongOffline, removeOfflineSong } from "@/lib/offlineCache";
+import { downloadSongForOffline, isSongOffline, removeOfflineSong, queuePendingDownload } from "@/lib/offlineCache";
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -53,6 +54,7 @@ export function FullPlayerPage() {
     cycleRepeatMode,
   } = usePlayer();
   const pushToast = useToast();
+  const { isOnline } = useOnlineStatus();
   const [tab, setTab] = useState<"eq" | "queue">("eq");
 
   const [offlineState, setOfflineState] = useState<"idle" | "saving" | "saved">("idle");
@@ -65,7 +67,13 @@ export function FullPlayerPage() {
 
   useEffect(() => {
     if (!currentSong) return;
-    setOfflineState(isSongOffline(currentSong._id) ? "saved" : "idle");
+    let cancelled = false;
+    isSongOffline(currentSong._id).then((offline) => {
+      if (!cancelled) setOfflineState(offline ? "saved" : "idle");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [currentSong]);
 
   function handlePointerDown(e: React.PointerEvent) {
@@ -98,6 +106,16 @@ export function FullPlayerPage() {
         await removeOfflineSong(currentSong._id);
         setOfflineState("idle");
         pushToast("success", "Retiré du mode hors-ligne.");
+      } else if (!isOnline) {
+        await queuePendingDownload({
+          _id: currentSong._id,
+          title: currentSong.title,
+          coverUrl: currentSong.coverUrl,
+          audioUrl: currentSong.audioUrl,
+          duration: currentSong.duration,
+          artist: currentSong.artist,
+        });
+        pushToast("info", "En attente — le téléchargement démarrera à la reconnexion.");
       } else {
         setOfflineState("saving");
         await downloadSongForOffline({
