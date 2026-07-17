@@ -58,9 +58,9 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
-        className="relative grid h-10 w-10 place-items-center rounded-full border border-border transition-colors hover:border-accent"
+        className="relative grid h-9 w-9 place-items-center rounded-full border border-border transition-colors hover:border-accent"
       >
-        <Bell size={18} />
+        <Bell size={16} />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-medium text-base">
             {unreadCount}

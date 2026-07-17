@@ -10,12 +10,12 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       aria-label="Changer de thème"
-      className="grid h-10 w-10 place-items-center rounded-full border border-border transition-colors hover:border-accent"
+      className="grid h-9 w-9 place-items-center rounded-full border border-border transition-colors hover:border-accent"
     >
       {theme === "dark" ? (
-        <Sun size={18} className="text-ink" />
+        <Sun size={16} className="text-ink" />
       ) : (
-        <Moon size={18} className="text-ink" />
+        <Moon size={16} className="text-ink" />
       )}
     </button>
   );

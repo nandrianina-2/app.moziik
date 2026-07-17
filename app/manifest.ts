@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
 import { getSiteConfig } from "@/lib/siteConfig";
 
+// Même remarque que pour /api/site-config : sans ceci, ce fichier de
+// métadonnées est généré une fois au build et ne reflèterait jamais un
+// changement de logo fait depuis /admin/parametres.
+export const dynamic = "force-dynamic";
+
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const config = await getSiteConfig();
 
