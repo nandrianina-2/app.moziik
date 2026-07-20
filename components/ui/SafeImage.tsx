@@ -21,7 +21,7 @@ export function SafeImage({
   width: number;
   height: number;
   className?: string;
-  priority: boolean;
+  priority?: boolean;
 }) {
   if (!src) {
     return (
