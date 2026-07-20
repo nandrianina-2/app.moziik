@@ -131,8 +131,8 @@ export default function AdminSongsPage() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{song.title}</p>
               <p className="flex items-center gap-1 text-xs text-ink-muted truncate">
-                {song.artist.stageName}
-                {song.artist.verified && <BadgeCheck size={11} className="text-verified shrink-0" />}
+                {song.artist?.stageName ?? "Artiste inconnu"}
+                {song.artist?.verified && <BadgeCheck size={11} className="text-verified shrink-0" />}
                 {" · "}{song.genre}
               </p>
               <p className={`text-[11px] mt-0.5 ${statusColor[song.status]}`}>{statusLabel[song.status]}</p>
