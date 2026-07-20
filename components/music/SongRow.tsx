@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { useSession } from "next-auth/react";
 import { Play, Pause, BadgeCheck, Clock, MoreVertical } from "lucide-react";
 import { usePlayer, type PlayableSong } from "@/context/PlayerProvider";
@@ -65,7 +65,7 @@ export function SongRow({
     >
       <button onClick={handleClick} className="flex items-center gap-3 flex-1 min-w-0 text-left">
         <div className="relative shrink-0">
-          <Image src={song.coverUrl} alt={song.title} width={44} height={44} className="rounded-lg object-cover" />
+          <SafeImage src={song.coverUrl} alt={song.title} width={44} height={44} className="rounded-lg object-cover" />
           <span className="absolute inset-0 grid place-items-center rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
             {isCurrent && isPlaying ? (
               <Pause size={16} className="text-white" fill="currentColor" />

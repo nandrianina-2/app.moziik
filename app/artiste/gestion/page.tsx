@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { useSession } from "next-auth/react";
 import { Music, Disc3, Users2, Plus, Pencil, Trash2, Check, X, BadgeCheck } from "lucide-react";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
@@ -160,7 +160,7 @@ export default function ArtistManagementPage() {
             {songs.length === 0 && <p className="text-sm text-ink-muted">Tu n&apos;as encore publié aucun son.</p>}
             {songs.map((song) => (
               <div key={song._id} className="flex items-center gap-3 rounded-xl2 border border-border bg-surface px-4 py-3">
-                <Image src={song.coverUrl} alt={song.title} width={40} height={40} className="rounded-lg object-cover shrink-0" />
+                <SafeImage src={song.coverUrl} alt={song.title} width={40} height={40} className="rounded-lg object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm truncate">{song.title}</p>
                   <p className={`text-[11px] ${statusColor[song.status]}`}>{statusLabel[song.status]}</p>
@@ -190,7 +190,7 @@ export default function ArtistManagementPage() {
             {albums.length === 0 && <p className="text-sm text-ink-muted col-span-full">Pas encore d&apos;album.</p>}
             {albums.map((album) => (
               <Link key={album._id} href={`/album/${album._id}`}>
-                <Image src={album.coverUrl} alt={album.title} width={140} height={140} className="rounded-xl2 object-cover w-full aspect-square mb-2" />
+                <SafeImage src={album.coverUrl} alt={album.title} width={140} height={140} className="rounded-xl2 object-cover w-full aspect-square mb-2" />
                 <p className="text-sm truncate">{album.title}</p>
                 <p className="text-xs text-ink-muted">{album.songs.length} son(s)</p>
               </Link>
@@ -206,7 +206,7 @@ export default function ArtistManagementPage() {
           )}
           {featurings.map((song) => (
             <div key={song._id} className="flex items-center gap-3 rounded-xl2 border border-border bg-surface px-4 py-3">
-              <Image src={song.coverUrl} alt={song.title} width={40} height={40} className="rounded-lg object-cover shrink-0" />
+              <SafeImage src={song.coverUrl} alt={song.title} width={40} height={40} className="rounded-lg object-cover shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate">{song.title}</p>
                 <p className="flex items-center gap-1 text-xs text-ink-muted truncate">

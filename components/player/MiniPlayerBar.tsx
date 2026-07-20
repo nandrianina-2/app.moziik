@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import {
   Play,
   Pause,
@@ -115,7 +115,7 @@ export function MiniPlayerBar() {
           onClick={openFullPlayer}
           className="flex min-w-0 flex-1 items-center gap-3 text-left md:w-64 md:flex-none"
         >
-          <Image
+          <SafeImage
             src={currentSong.coverUrl}
             alt={currentSong.title}
             width={44}

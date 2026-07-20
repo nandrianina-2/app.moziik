@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { useParams } from "next/navigation";
 import { Play, Pause, BadgeCheck } from "lucide-react";
 import { usePlayer, type PlayableSong } from "@/context/PlayerProvider";
@@ -49,7 +49,7 @@ export default function SongDetailPage() {
   return (
     <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <div className="flex items-center gap-5 mb-10">
-        <Image src={song.coverUrl} alt={song.title} width={120} height={120} className="rounded-xl2 object-cover shadow-lg" />
+        <SafeImage src={song.coverUrl} alt={song.title} width={120} height={120} className="rounded-xl2 object-cover shadow-lg" />
         <div>
           <h1 className="text-xl font-display mb-1">{song.title}</h1>
           <p className="flex items-center gap-1 text-sm text-ink-muted mb-4">

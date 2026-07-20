@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { usePlayer } from "@/context/PlayerProvider";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 
@@ -23,7 +23,7 @@ export function QueuePanel() {
                 isCurrent ? "bg-surface" : ""
               }`}
             >
-              <Image src={song.coverUrl} alt={song.title} width={36} height={36} className="rounded-lg object-cover" />
+              <SafeImage src={song.coverUrl} alt={song.title} width={36} height={36} className="rounded-lg object-cover" />
               <span className="min-w-0 flex-1">
                 <span className={`block text-sm truncate ${isCurrent ? "text-accent" : ""}`}>{song.title}</span>
                 <span className="block text-xs text-ink-muted truncate">{song.artist.stageName}</span>

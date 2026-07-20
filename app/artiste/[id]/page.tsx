@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { BadgeCheck, Users, Disc3 } from "lucide-react";
 import { SongRow } from "@/components/music/SongRow";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { useToast } from "@/context/ToastProvider";
 import { idbGet, idbPut, STORES } from "@/lib/offlineDb";
 import type { PlayableSong } from "@/context/PlayerProvider";
@@ -136,7 +137,7 @@ export default function ArtistProfilePage() {
           <div className="flex gap-4 overflow-x-auto pb-2">
             {albums.map((album) => (
               <Link key={album._id} href={`/album/${album._id}`} className="shrink-0 w-32">
-                <Image src={album.coverUrl} alt={album.title} width={128} height={128} className="rounded-xl2 object-cover mb-2" />
+                <SafeImage src={album.coverUrl} alt={album.title} width={128} height={128} className="rounded-xl2 object-cover mb-2" />
                 <p className="text-xs truncate flex items-center gap-1">
                   <Disc3 size={11} className="shrink-0" /> {album.title}
                 </p>

@@ -123,7 +123,11 @@ export default function AdminSongsPage() {
             key={song._id}
             className="flex items-center gap-3 rounded-xl2 border border-border bg-surface px-4 py-3.5"
           >
-            <Image src={song.coverUrl} alt={song.title} width={44} height={44} className="rounded-lg object-cover shrink-0" />
+            {song.coverUrl ? (
+              <Image src={song.coverUrl} alt={song.title} width={44} height={44} className="rounded-lg object-cover shrink-0" />
+            ) : (
+              <div className="h-11 w-11 rounded-lg bg-base shrink-0" />
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{song.title}</p>
               <p className="flex items-center gap-1 text-xs text-ink-muted truncate">

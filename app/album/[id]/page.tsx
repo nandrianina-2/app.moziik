@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { BadgeCheck, Play, DownloadCloud, Loader2 } from "lucide-react";
@@ -72,7 +72,7 @@ export default function AlbumDetailPage() {
   return (
     <div className="px-6 py-8 md:px-10 md:py-10 max-w-4xl">
       <div className="flex items-center gap-5 mb-8">
-        <Image src={album.coverUrl} alt={album.title} width={120} height={120} className="rounded-xl2 object-cover shadow-lg" />
+        <SafeImage src={album.coverUrl} alt={album.title} width={120} height={120} className="rounded-xl2 object-cover shadow-lg" />
         <div>
           <p className="text-xs uppercase tracking-wide text-ink-muted mb-1">{album.type}</p>
           <h1 className="text-xl font-display mb-1">{album.title}</h1>

@@ -71,6 +71,7 @@ export default function AdminSettingsPage() {
       });
       if (!res.ok) throw new Error();
       pushToast("success", "Paramètres enregistrés.");
+      window.dispatchEvent(new Event("moziik-site-config-change"));
     } catch {
       pushToast("error", "L'enregistrement a échoué.");
     } finally {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import {
   ChevronDown,
   Play,
@@ -182,7 +182,7 @@ export function FullPlayerPage() {
           onPointerCancel={handlePointerUp}
           className="cursor-grab active:cursor-grabbing touch-none"
         >
-          <Image
+          <SafeImage
             src={currentSong.coverUrl}
             alt={currentSong.title}
             width={280}
