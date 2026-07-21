@@ -5,6 +5,7 @@ import { useAudioEngine } from "@/components/player/hooks/useAudioEngine";
 import { markOfflineSongPlayed } from "@/lib/offlineCache";
 import { idbPut, STORES } from "@/lib/offlineDb";
 import { enqueueSyncAction } from "@/lib/syncQueue";
+import { useSiteConfig } from "@/context/SiteConfigProvider";
 
 export type PlayableSong = {
   _id: string;
@@ -61,6 +62,7 @@ function shuffledOrder(length: number, keepFirst: number): number[] {
 }
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
+  const siteConfig = useSiteConfig();
   const { audioRef, ensureAudioGraph, setBandGain, applyPreset, setBassBoost } = useAudioEngine();
   const [queue, setQueue] = useState<PlayableSong[]>([]);
   // `order` est une permutation des index de `queue` représentant l'ordre de
@@ -218,6 +220,55 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   function cycleRepeatMode() {
     setRepeatMode((prev) => (prev === "off" ? "all" : prev === "all" ? "one" : "off"));
   }
+
+  // Métadonnées "en cours de lecture" : titre de l'onglet, favicon (pochette
+  // du son), et Media Session (contrôles système / écran de verrouillage,
+  // notification média sur mobile).
+  const originalFavicons = useRef<{ el: HTMLLinkElement; href: string }[] | null>(null);
+  const originalTitle = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (originalTitle.current === null) originalTitle.current = document.title;
+
+    const faviconLinks = Array.from(document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']"));
+    if (originalFavicons.current === null && faviconLinks.length > 0) {
+      originalFavicons.current = faviconLinks.map((el) => ({ el, href: el.href }));
+    }
+
+    if (currentSong) {
+      document.title = `${currentSong.title} — ${currentSong.artist.stageName}`;
+      faviconLinks.forEach((link) => (link.href = currentSong.coverUrl));
+    } else {
+      document.title = originalTitle.current ?? siteConfig.siteName;
+      originalFavicons.current?.forEach(({ el, href }) => (el.href = href));
+    }
+  }, [currentSong, siteConfig.siteName]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator) || !currentSong) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentSong.title,
+      artist: currentSong.artist.stageName,
+      album:
+        typeof currentSong.album === "object" && currentSong.album ? currentSong.album.title : siteConfig.siteName,
+      artwork: [
+        { src: currentSong.coverUrl, sizes: "96x96", type: "image/png" },
+        { src: currentSong.coverUrl, sizes: "256x256", type: "image/png" },
+        { src: currentSong.coverUrl, sizes: "512x512", type: "image/png" },
+      ],
+    });
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+
+    navigator.mediaSession.setActionHandler("play", togglePlay);
+    navigator.mediaSession.setActionHandler("pause", togglePlay);
+    navigator.mediaSession.setActionHandler("previoustrack", playPrevious);
+    navigator.mediaSession.setActionHandler("nexttrack", playNext);
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (details.seekTime !== undefined) seek(details.seekTime);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSong, isPlaying]);
 
   return (
     <PlayerContext.Provider

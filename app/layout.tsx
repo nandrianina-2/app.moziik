@@ -22,7 +22,17 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getSiteConfig();
-  return { title: config.siteName, description: config.tagline };
+  return {
+    title: config.siteName,
+    description: config.tagline,
+    icons: {
+      icon: [
+        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      ],
+      apple: "/apple-icon.png",
+    },
+  };
 }
 
 export const viewport: Viewport = {

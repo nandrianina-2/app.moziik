@@ -245,3 +245,22 @@ simple localStorage initial :
   chargement — le nom/logo mis à jour dans `/admin/parametres`
   n'apparaissait donc jamais sans recharger la page. Un évènement
   déclenche maintenant le rafraîchissement automatiquement.
+
+## Ajustements — logo et métadonnées de lecture
+- **Logo** : sauvegarde immédiate côté serveur dès l'upload (plus
+  besoin de cliquer sur "Enregistrer les paramètres" en plus) —
+  supprime la cause la plus probable du "ça n'apparaît jamais"
+- Ajout d'une **option lien direct** pour le logo, en alternative à
+  l'upload de fichier
+- Vérification de tous les emplacements : sidebar, header mobile,
+  pages de connexion, manifest PWA — tous branchés sur la même config,
+  déjà cohérents
+- **Favicon** : il n'existait tout simplement aucune balise favicon
+  générée (seulement des fichiers dans `/public`, jamais reliés) —
+  corrigé dans `generateMetadata`
+- **Métadonnées "en cours de lecture"** : le titre de l'onglet devient
+  "Titre — Artiste" pendant la lecture (revient au nom du site à
+  l'arrêt), le favicon devient la pochette du son en cours, et la
+  **Media Session API** est câblée (contrôles lecture/pause/suivant/
+  précédent sur l'écran de verrouillage et les notifications média du
+  système, sur mobile comme sur desktop)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, Link2, Check } from "lucide-react";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { FormField } from "@/components/ui/FormField";
 import { useToast } from "@/context/ToastProvider";
@@ -25,6 +25,7 @@ export default function AdminSettingsPage() {
   const [config, setConfig] = useState<SiteConfigForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoUrlInput, setLogoUrlInput] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -33,6 +34,7 @@ export default function AdminSettingsPage() {
         if (!res.ok) throw new Error();
         const data = await res.json();
         setConfig(data.config);
+        setLogoUrlInput(data.config.logoUrl ?? "");
       } catch {
         pushToast("error", "Impossible de charger les paramètres.");
       }
@@ -40,16 +42,46 @@ export default function AdminSettingsPage() {
     load();
   }, [pushToast]);
 
-  async function handleLogoChange(file: File) {
+  /**
+   * Le logo est enregistré immédiatement côté serveur (au lieu
+   * d'attendre le clic sur "Enregistrer les paramètres" avec le reste
+   * du formulaire) — évite qu'un upload réussi n'apparaisse jamais
+   * parce qu'on a oublié de sauvegarder ensuite.
+   */
+  async function saveLogoUrl(url: string) {
+    if (!config) return;
+    try {
+      const res = await fetch("/api/admin/site-config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl: url }),
+      });
+      if (!res.ok) throw new Error();
+      setConfig({ ...config, logoUrl: url });
+      setLogoUrlInput(url);
+      window.dispatchEvent(new Event("moziik-site-config-change"));
+      pushToast("success", "Logo mis à jour.");
+    } catch {
+      pushToast("error", "Échec de l'enregistrement du logo.");
+    }
+  }
+
+  async function handleLogoUpload(file: File) {
     setUploadingLogo(true);
     try {
       const { url } = await uploadToCloudinaryClient(file, "site-assets");
-      setConfig((prev) => (prev ? { ...prev, logoUrl: url } : prev));
+      await saveLogoUrl(url);
     } catch {
       pushToast("error", "Échec de l'envoi du logo.");
     } finally {
       setUploadingLogo(false);
     }
+  }
+
+  function handleLogoUrlSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!logoUrlInput.trim()) return;
+    saveLogoUrl(logoUrlInput.trim());
   }
 
   function updatePlan(index: number, field: keyof PlanPricing, value: number) {
@@ -92,20 +124,56 @@ export default function AdminSettingsPage() {
       <section className="space-y-4">
         <h2 className="text-sm uppercase tracking-wide text-ink-muted">Identité du site</h2>
 
-        <div className="flex items-center gap-4">
-          {config.logoUrl && (
-            <Image src={config.logoUrl} alt="Logo" width={48} height={48} className="rounded-lg object-cover" />
-          )}
-          <label className="flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 cursor-pointer text-sm text-ink-muted hover:border-accent">
-            <UploadCloud size={16} />
-            {uploadingLogo ? "Envoi..." : "Changer le logo"}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleLogoChange(e.target.files[0])}
-            />
-          </label>
+        <div className="space-y-3">
+          <span className="text-sm text-ink-muted block">Logo</span>
+          <div className="flex items-center gap-4">
+            {config.logoUrl ? (
+              <Image src={config.logoUrl} alt="Logo" width={56} height={56} className="rounded-lg object-contain bg-surface border border-border p-1.5" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg bg-surface border border-border grid place-items-center text-ink-muted text-xs">
+                Aucun
+              </div>
+            )}
+            <label className="flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 cursor-pointer text-sm text-ink-muted hover:border-accent">
+              <UploadCloud size={16} />
+              {uploadingLogo ? "Envoi..." : "Envoyer un fichier"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploadingLogo}
+                onChange={(e) => e.target.files?.[0] && handleLogoUpload(e.target.files[0])}
+              />
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-ink-muted">ou</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <form onSubmit={handleLogoUrlSubmit} className="flex items-center gap-2">
+            <label className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-base px-3.5 py-2.5">
+              <Link2 size={14} className="text-ink-muted shrink-0" />
+              <input
+                value={logoUrlInput}
+                onChange={(e) => setLogoUrlInput(e.target.value)}
+                placeholder="https://... lien direct vers une image"
+                className="flex-1 bg-transparent text-sm outline-none"
+              />
+            </label>
+            <button
+              type="submit"
+              aria-label="Utiliser ce lien comme logo"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-accent text-base hover:bg-accent-hover"
+            >
+              <Check size={16} />
+            </button>
+          </form>
+          <p className="text-xs text-ink-muted">
+            Recommandé : image carrée, au moins 512×512, fond transparent (PNG/SVG).
+          </p>
         </div>
 
         <FormField
