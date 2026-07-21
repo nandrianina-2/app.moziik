@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { LayoutDashboard, Users, Music, CalendarDays, Settings, Award } from "lucide-react";
+import { LayoutDashboard, Users, Music, Disc3, ListMusic, MessageCircle, CalendarDays, Settings, Award } from "lucide-react";
 
 const links = [
   { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard },
   { href: "/admin/membres", label: "Membres & artistes", icon: Users },
-  { href: "/admin/musiques", label: "Modération musiques", icon: Music },
-  { href: "/admin/evenements", label: "Modération évènements", icon: CalendarDays },
+  { href: "/admin/musiques", label: "Musiques", icon: Music },
+  { href: "/admin/albums", label: "Albums", icon: Disc3 },
+  { href: "/admin/playlists", label: "Playlists", icon: ListMusic },
+  { href: "/admin/commentaires", label: "Commentaires", icon: MessageCircle },
+  { href: "/admin/evenements", label: "Évènements", icon: CalendarDays },
   { href: "/admin/badges", label: "Badges", icon: Award },
   { href: "/admin/parametres", label: "Paramètres du site", icon: Settings },
 ];

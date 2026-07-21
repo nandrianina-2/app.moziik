@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { MapPin, CalendarDays, Ticket, Plus, BadgeCheck } from "lucide-react";
+import { MapPin, CalendarDays, Ticket, Plus, BadgeCheck, Pencil, Trash2 } from "lucide-react";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { CreateEventModal } from "@/components/modals/CreateEventModal";
 import { useToast } from "@/context/ToastProvider";
@@ -17,6 +18,7 @@ type EventItem = {
   date: string;
   ticketUrl?: string;
   price?: number;
+  createdBy: string;
   artist?: { stageName: string; verified?: boolean };
 };
 
@@ -27,6 +29,16 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [canCreate, setCanCreate] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+
+  async function deleteEvent(id: string) {
+    const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      pushToast("error", "La suppression a échoué.");
+      return;
+    }
+    pushToast("success", "Évènement supprimé.");
+    setEvents((prev) => prev.filter((e) => e._id !== id));
+  }
 
   async function load() {
     try {
@@ -88,40 +100,59 @@ export default function EventsPage() {
       )}
 
       <div className="space-y-3">
-        {events.map((event) => (
-          <div key={event._id} className="flex gap-4 rounded-xl2 border border-border bg-surface p-4">
-            {event.coverUrl && (
-              <Image src={event.coverUrl} alt={event.title} width={88} height={88} className="rounded-xl object-cover shrink-0" />
-            )}
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium truncate">{event.title}</h3>
-              {event.artist && (
-                <p className="flex items-center gap-1 text-xs text-ink-muted mt-0.5">
-                  {event.artist.stageName}
-                  {event.artist.verified && <BadgeCheck size={11} className="text-verified" />}
+        {events.map((event) => {
+          const canManage = session?.user?.role === "admin" || session?.user?.id === event.createdBy;
+          return (
+            <div key={event._id} className="flex gap-4 rounded-xl2 border border-border bg-surface p-4">
+              <SafeImage src={event.coverUrl} alt={event.title} width={88} height={88} className="rounded-xl object-cover shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-medium truncate">{event.title}</h3>
+                {event.artist && (
+                  <p className="flex items-center gap-1 text-xs text-ink-muted mt-0.5">
+                    {event.artist.stageName}
+                    {event.artist.verified && <BadgeCheck size={11} className="text-verified" />}
+                  </p>
+                )}
+                <p className="flex items-center gap-3 text-xs text-ink-muted mt-1.5">
+                  <span className="flex items-center gap-1">
+                    <CalendarDays size={12} /> {new Date(event.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin size={12} /> {event.location}
+                  </span>
                 </p>
-              )}
-              <p className="flex items-center gap-3 text-xs text-ink-muted mt-1.5">
-                <span className="flex items-center gap-1">
-                  <CalendarDays size={12} /> {new Date(event.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPin size={12} /> {event.location}
-                </span>
-              </p>
-              {event.ticketUrl && (
-                <a
-                  href={event.ticketUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-accent hover:underline mt-2"
-                >
-                  <Ticket size={12} /> Billetterie{event.price ? ` — ${event.price} $` : ""}
-                </a>
+                {event.ticketUrl && (
+                  <a
+                    href={event.ticketUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-accent hover:underline mt-2"
+                  >
+                    <Ticket size={12} /> Billetterie{event.price ? ` — ${event.price} $` : ""}
+                  </a>
+                )}
+              </div>
+              {canManage && (
+                <div className="flex flex-col gap-1 shrink-0">
+                  <Link
+                    href={`/evenements/${event._id}/modifier`}
+                    aria-label="Modifier"
+                    className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-base hover:text-accent"
+                  >
+                    <Pencil size={14} />
+                  </Link>
+                  <button
+                    onClick={() => deleteEvent(event._id)}
+                    aria-label="Supprimer"
+                    className="grid h-8 w-8 place-items-center rounded-full text-ink-muted hover:bg-base hover:text-accent"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {showCreate && <CreateEventModal onClose={() => setShowCreate(false)} onCreated={load} />}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Smile, Meh, Frown, Send, Clock } from "lucide-react";
+import { Smile, Meh, Frown, Send, Clock, Trash2 } from "lucide-react";
 import { useToast } from "@/context/ToastProvider";
 import { useOnlineStatus } from "@/context/OnlineStatusProvider";
 import { enqueueSyncAction } from "@/lib/syncQueue";
@@ -12,7 +12,7 @@ type SongComment = {
   text: string;
   sentiment?: "positive" | "neutral" | "negative";
   createdAt: string;
-  user: { name: string; avatarUrl?: string };
+  user: { _id: string; name: string; avatarUrl?: string };
   pending?: boolean; // écrit hors-ligne, pas encore synchronisé
 };
 
@@ -94,6 +94,15 @@ export function CommentsSection({ songId }: { songId: string }) {
     }
   }
 
+  async function deleteComment(id: string) {
+    const res = await fetch(`/api/comments/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      pushToast("error", "La suppression a échoué.");
+      return;
+    }
+    setComments((prev) => prev.filter((c) => c._id !== id));
+  }
+
   return (
     <div>
       <h3 className="text-sm uppercase tracking-wide text-ink-muted mb-4">
@@ -145,6 +154,15 @@ export function CommentsSection({ songId }: { songId: string }) {
               </div>
               {comment.sentiment && (
                 <Icon size={14} className={`shrink-0 mt-1 ${sentimentColor[comment.sentiment]}`} />
+              )}
+              {!comment.pending && (session?.user?.id === comment.user._id || session?.user?.role === "admin") && (
+                <button
+                  onClick={() => deleteComment(comment._id)}
+                  aria-label="Supprimer le commentaire"
+                  className="shrink-0 text-ink-muted hover:text-accent"
+                >
+                  <Trash2 size={13} />
+                </button>
               )}
             </li>
           );

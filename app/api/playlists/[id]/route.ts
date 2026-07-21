@@ -20,7 +20,7 @@ export const PATCH = withApiErrors(
     await connectDB();
     const playlist = await Playlist.findById(params.id);
     if (!playlist) throw new ApiError("Playlist introuvable.", 404);
-    if (playlist.owner.toString() !== session.user.id) {
+    if (playlist.owner.toString() !== session.user.id && session.user.role !== "admin") {
       throw new ApiError("Tu ne peux modifier que tes propres playlists.", 403);
     }
 
@@ -44,7 +44,7 @@ export const DELETE = withApiErrors(
     await connectDB();
     const playlist = await Playlist.findById(params.id);
     if (!playlist) throw new ApiError("Playlist introuvable.", 404);
-    if (playlist.owner.toString() !== session.user.id) {
+    if (playlist.owner.toString() !== session.user.id && session.user.role !== "admin") {
       throw new ApiError("Tu ne peux supprimer que tes propres playlists.", 403);
     }
 

@@ -221,3 +221,27 @@ simple localStorage initial :
   toute action synchronisée (Phase précédente comme celle-ci) passe
   par le serveur — donc visible sur tous les appareils dès qu'ils sont
   en ligne. Pas de mécanisme supplémentaire nécessaire.
+
+## Ajustements — gestion admin complète
+- `/admin/albums` : recherche, suppression
+- `/admin/playlists` : recherche, suppression (modération des playlists publiques/privées)
+- `/admin/commentaires` : recherche, filtre par sentiment, suppression
+- `/admin/evenements` : refonte complète — tous statuts (pas seulement
+  en attente), modification, suppression, en plus de l'approbation/rejet
+- Nouvelle page `/evenements/[id]/modifier` (créateur ou admin)
+- `/evenements` (page publique) : actions modifier/supprimer visibles
+  pour le créateur de l'évènement ou un admin
+- Commentaires : suppression possible directement depuis la page du
+  son par l'auteur ou un admin, pas seulement depuis l'admin
+- Nouvelles routes API : `PATCH`/`DELETE /api/events/[id]`,
+  `DELETE /api/comments/[id]`, `GET /api/admin/comments`,
+  `GET /api/admin/playlists` ; bypass admin ajouté sur
+  `PATCH`/`DELETE /api/playlists/[id]` (absent jusqu'ici)
+- Nouveau composant `SafeImage` : évite le crash fatal de next/image
+  quand une pochette/couverture est manquante — appliqué partout où
+  c'était encore risqué (son, album, artiste, espace de gestion
+  artiste, file d'attente, mini-lecteur, lecteur plein écran)
+- Correctif : `SiteConfigProvider` ne se rafraîchissait qu'au premier
+  chargement — le nom/logo mis à jour dans `/admin/parametres`
+  n'apparaissait donc jamais sans recharger la page. Un évènement
+  déclenche maintenant le rafraîchissement automatiquement.
