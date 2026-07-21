@@ -14,12 +14,14 @@ export function SafeImage({
   width,
   height,
   className,
+  priority,
 }: {
   src?: string | null;
   alt: string;
   width: number;
   height: number;
   className?: string;
+  priority?: boolean;
 }) {
   if (!src) {
     return (
@@ -32,5 +34,5 @@ export function SafeImage({
     );
   }
 
-  return <Image src={src} alt={alt} width={width} height={height} className={className} />;
+  return <Image src={src} alt={alt} width={width} height={height} className={className} priority={priority} />;
 }
