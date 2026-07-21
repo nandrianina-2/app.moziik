@@ -65,7 +65,7 @@ export function CommentsSection({ songId }: { songId: string }) {
           _id: `local-${Date.now()}`,
           text,
           createdAt: new Date().toISOString(),
-          user: { name: session?.user?.name ?? "Toi" },
+          user: { _id: session?.user?.id ?? "local", name: session?.user?.name ?? "Toi" },
           pending: true,
         },
         ...prev,
