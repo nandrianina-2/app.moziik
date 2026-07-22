@@ -264,3 +264,25 @@ simple localStorage initial :
   **Media Session API** est câblée (contrôles lecture/pause/suivant/
   précédent sur l'écran de verrouillage et les notifications média du
   système, sur mobile comme sur desktop)
+
+## Ajustements — bouton d'installation PWA
+- **Cause probable trouvée** : le manifest utilisait le logo uploadé
+  par l'admin comme icône PWA, mais Chrome exige que les dimensions
+  RÉELLES du fichier correspondent exactement à celles déclarées
+  (512×512 et 192×192) — sinon l'app n'est simplement pas installable,
+  sans message d'erreur visible. Corrigé en forçant ces dimensions via
+  une transformation Cloudinary (`w_512,h_512,c_pad`), avec repli sur
+  les icônes statiques (déjà aux bonnes tailles, vérifié) si le logo
+  n'est pas une URL Cloudinary
+- `apple-icon.png` était référencé dans les métadonnées mais n'existait
+  pas — corrigé
+- **iOS/Safari** : `beforeinstallprompt` n'existe pas sur cette
+  plateforme (Apple ne l'implémente pas) — le bouton n'y serait jamais
+  apparu, quoi qu'on fasse côté code. Ajout d'une détection iOS avec
+  des instructions manuelles ("Partager → Sur l'écran d'accueil") à
+  la place du bouton natif
+- **Limite restante à connaître** : même corrigé, Chrome peut retarder
+  l'apparition du bouton selon ses propres critères d'engagement
+  (visites répétées, temps passé sur le site) — ce n'est pas un bug,
+  c'est voulu par le navigateur pour éviter les popups d'installation
+  agressifs dès la première visite.

@@ -19,6 +19,7 @@ export type PlayableSong = {
   genre?: string;
   releaseDate?: string;
   likesCount?: number;
+  playsCount?: number;
 };
 
 export type RepeatMode = "off" | "all" | "one";

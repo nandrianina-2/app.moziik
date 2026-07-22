@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Home, Search, Library, CalendarDays, User } from "lucide-react";
 
 const links = [
@@ -10,20 +13,27 @@ const links = [
 ];
 
 export function MobileNav() {
+  const pathname = usePathname();
+
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-surface/95 backdrop-blur">
       <ul className="flex justify-between px-2 py-2">
-        {links.map(({ href, label, icon: Icon }) => (
-          <li key={href}>
-            <Link
-              href={href}
-              className="flex flex-col items-center gap-1 px-3 py-1 text-[11px] text-ink-muted transition-colors hover:text-accent"
-            >
-              <Icon size={20} />
-              {label}
-            </Link>
-          </li>
-        ))}
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                className={`flex flex-col items-center gap-1 px-3 py-1 text-[11px] transition-colors ${
+                  isActive ? "text-accent" : "text-ink-muted hover:text-accent"
+                }`}
+              >
+                <Icon size={20} />
+                {label}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

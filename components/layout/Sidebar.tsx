@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Home, Search, Library, Radio, CalendarDays, User, CreditCard, Trophy } from "lucide-react";
 import { useSiteConfig } from "@/context/SiteConfigProvider";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
@@ -21,6 +22,7 @@ const links = [
 
 export function Sidebar() {
   const siteConfig = useSiteConfig();
+  const pathname = usePathname();
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 border-r border-border h-screen sticky top-0 px-4 py-6">
@@ -41,16 +43,23 @@ export function Sidebar() {
         </div>
       </div>
       <nav className="flex flex-col gap-1">
-        {links.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-muted transition-colors hover:bg-surface hover:text-ink"
-          >
-            <Icon size={18} />
-            {label}
-          </Link>
-        ))}
+        {links.map(({ href, label, icon: Icon }) => {
+          const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                isActive
+                  ? "bg-accent/10 text-accent font-medium"
+                  : "text-ink-muted hover:bg-surface hover:text-ink"
+              }`}
+            >
+              <Icon size={18} />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="mt-auto pt-6 px-3 flex flex-col gap-1 text-xs text-ink-muted">
