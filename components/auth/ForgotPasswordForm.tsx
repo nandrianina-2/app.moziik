@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Mail } from "lucide-react";
 import { FormField } from "@/components/ui/FormField";
 
 export function ForgotPasswordForm() {
@@ -22,7 +23,7 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="w-full max-w-sm">
+      <div className="w-full">
         <h1 className="text-2xl font-display mb-2">Vérifie ta boîte mail</h1>
         <p className="text-sm text-ink-muted">
           Si un compte existe avec l&apos;adresse {email}, un lien de
@@ -33,7 +34,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <div className="w-full max-w-sm">
+    <div className="w-full">
       <h1 className="text-2xl font-display mb-1">Mot de passe oublié</h1>
       <p className="text-sm text-ink-muted mb-6">
         Indique ton email, on t&apos;envoie un lien de réinitialisation.
@@ -44,13 +45,15 @@ export function ForgotPasswordForm() {
           label="Email"
           type="email"
           required
+          icon={Mail}
+          placeholder="Exemple@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-accent py-2.5 text-sm font-medium text-base transition-colors hover:bg-accent-hover disabled:opacity-60"
+          className="w-full rounded-xl bg-accent py-3 text-sm font-medium text-base transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
           {loading ? "Envoi..." : "Envoyer le lien"}
         </button>

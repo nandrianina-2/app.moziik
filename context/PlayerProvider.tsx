@@ -32,6 +32,8 @@ type PlayerContextValue = {
   isFullPlayerOpen: boolean;
   isShuffled: boolean;
   repeatMode: RepeatMode;
+  volume: number;
+  setVolume: (value: number) => void;
   playQueue: (songs: PlayableSong[], startIndex?: number) => void;
   enqueue: (song: PlayableSong) => void;
   togglePlay: () => void;
@@ -76,7 +78,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [isFullPlayerOpen, setFullPlayerOpen] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("off");
+  const [volume, setVolumeState] = useState(1);
   const hasRecordedPlay = useRef(false);
+
+  // Volume persisté d'une session à l'autre.
+  useEffect(() => {
+    const stored = localStorage.getItem("moziik-volume");
+    if (stored !== null) {
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed)) setVolumeState(parsed);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume, audioRef]);
+
+  function setVolume(value: number) {
+    const clamped = Math.min(1, Math.max(0, value));
+    setVolumeState(clamped);
+    localStorage.setItem("moziik-volume", String(clamped));
+  }
 
   const currentIndex = order[position] ?? 0;
   const currentSong = queue[currentIndex] ?? null;
@@ -281,6 +303,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         isFullPlayerOpen,
         isShuffled,
         repeatMode,
+        volume,
+        setVolume,
         playQueue,
         enqueue,
         togglePlay,

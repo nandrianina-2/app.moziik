@@ -4,12 +4,15 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { FormField } from "@/components/ui/FormField";
+import { GoogleIcon } from "@/components/ui/GoogleIcon";
 
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,32 +38,43 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <h1 className="text-2xl font-display mb-1">Connexion</h1>
-      <p className="text-sm text-ink-muted mb-6">
-        Retrouve tes playlists et tes artistes préférés.
-      </p>
+    <div className="w-full">
+      <h1 className="text-2xl font-display mb-1">Bienvenue !</h1>
+      <p className="text-sm text-ink-muted mb-6">Connecte-toi à ton compte</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField
           label="Email"
           type="email"
           required
+          icon={Mail}
+          placeholder="Exemple@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <FormField
           label="Mot de passe"
-          type="password"
+          type={showPassword ? "text" : "password"}
           required
+          icon={Lock}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              className="text-ink-muted hover:text-ink"
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          }
         />
 
         {error && <p className="text-sm text-accent">{error}</p>}
 
         <div className="flex justify-end">
-          <Link href="/mot-de-passe-oublie" className="text-xs text-ink-muted hover:text-accent">
+          <Link href="/mot-de-passe-oublie" className="text-xs text-accent hover:underline">
             Mot de passe oublié ?
           </Link>
         </div>
@@ -68,7 +82,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-accent py-2.5 text-sm font-medium text-base transition-colors hover:bg-accent-hover disabled:opacity-60"
+          className="w-full rounded-xl bg-accent py-3 text-sm font-medium text-base transition-colors hover:bg-accent-hover disabled:opacity-60"
         >
           {loading ? "Connexion..." : "Se connecter"}
         </button>
@@ -82,12 +96,13 @@ export function LoginForm() {
 
       <button
         onClick={() => signIn("google", { callbackUrl: "/" })}
-        className="w-full rounded-xl border border-border py-2.5 text-sm font-medium transition-colors hover:border-accent"
+        className="w-full flex items-center justify-center gap-2.5 rounded-xl border border-border py-3 text-sm font-medium transition-colors hover:border-accent"
       >
+        <GoogleIcon size={18} />
         Continuer avec Google
       </button>
 
-      <p className="text-sm text-ink-muted mt-6">
+      <p className="text-sm text-ink-muted mt-6 text-center">
         Pas encore de compte ?{" "}
         <Link href="/inscription" className="text-accent hover:underline">
           Inscris-toi

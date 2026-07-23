@@ -1,16 +1,29 @@
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 
 export function FormField({
   label,
+  icon: Icon,
+  trailing,
   ...props
-}: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
+}: {
+  label: string;
+  icon?: LucideIcon;
+  trailing?: ReactNode;
+} & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="block">
       <span className="text-sm text-ink-muted mb-1.5 block">{label}</span>
-      <input
-        {...props}
-        className="w-full rounded-xl border border-border bg-base px-4 py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent"
-      />
+      <span className="relative flex items-center">
+        {Icon && <Icon size={16} className="pointer-events-none absolute left-4 text-ink-muted" />}
+        <input
+          {...props}
+          className={`w-full rounded-xl border border-border bg-base py-2.5 text-sm text-ink outline-none transition-colors focus:border-accent ${
+            Icon ? "pl-11" : "pl-4"
+          } ${trailing ? "pr-11" : "pr-4"}`}
+        />
+        {trailing && <span className="absolute right-3.5">{trailing}</span>}
+      </span>
     </label>
   );
 }

@@ -286,3 +286,23 @@ simple localStorage initial :
   (visites répétées, temps passé sur le site) — ce n'est pas un bug,
   c'est voulu par le navigateur pour éviter les popups d'installation
   agressifs dès la première visite.
+
+## Ajustements — mini-lecteur enrichi, pages d'authentification, icônes PWA
+- **Mini-lecteur desktop** entièrement refondu (mobile inchangé, déjà
+  compact) : cœur (j'aime, avec vrai état vérifié en base via un
+  nouveau `GET /api/songs/[id]/like`), badge qualité audio (reflète le
+  vrai réglage hors-ligne), file d'attente avec compteur, ajout à une
+  playlist, téléchargement hors-ligne, partage, menu "Plus" (réutilise
+  le menu contextuel complet), barre de progression pleine largeur
+  avec temps, **volume** (nouveau — n'existait pas du tout avant,
+  persisté d'une session à l'autre), bouton plein écran
+- **Pages connexion/inscription/mot de passe** : nouveau layout à deux
+  panneaux (image + accroche à gauche sur desktop, formulaire à
+  droite ; panneau image masqué sur mobile pour ne pas prendre toute
+  la place), champs avec icônes, affichage/masquage du mot de passe,
+  bouton Google avec vrai logo multicolore (`GoogleIcon`)
+- **Icônes PWA** : le logo uploadé par l'admin est maintenant utilisé
+  pour *toutes* les icônes (manifest any + maskable, favicon, icône
+  Apple), avec la marge de sécurité nécessaire pour les icônes
+  maskable (recadrage circulaire Android) — logique centralisée dans
+  `lib/icons.ts`

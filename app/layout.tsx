@@ -15,6 +15,7 @@ import { FullPlayerPage } from "@/components/player/FullPlayerPage";
 import { FloatingInstallButton } from "@/components/ui/FloatingInstallButton";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { getSiteConfig } from "@/lib/siteConfig";
+import { sizedIcon } from "@/lib/icons";
 
 const display = Sora({ subsets: ["latin"], variable: "--font-display" });
 const body = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-body" });
@@ -22,15 +23,19 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getSiteConfig();
+  const favicon32 = (config.logoUrl && sizedIcon(config.logoUrl, 32)) || "/favicon-32.png";
+  const favicon16 = (config.logoUrl && sizedIcon(config.logoUrl, 16)) || "/favicon-16.png";
+  const appleIcon = (config.logoUrl && sizedIcon(config.logoUrl, 180)) || "/icon-mark.png";
+
   return {
     title: config.siteName,
     description: config.tagline,
     icons: {
       icon: [
-        { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-        { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+        { url: favicon32, sizes: "32x32", type: "image/png" },
+        { url: favicon16, sizes: "16x16", type: "image/png" },
       ],
-      apple: "/icon-mark.png",
+      apple: appleIcon,
     },
   };
 }

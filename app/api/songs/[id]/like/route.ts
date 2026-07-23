@@ -6,6 +6,27 @@ import User from "@/models/User";
 import Song from "@/models/Song";
 import { ApiError, withApiErrors } from "@/lib/apiError";
 
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { connectDB } from "@/lib/db";
+import User from "@/models/User";
+import Song from "@/models/Song";
+import { ApiError, withApiErrors } from "@/lib/apiError";
+
+export const GET = withApiErrors(
+  async (_req: Request, { params }: { params: { id: string } }) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return NextResponse.json({ liked: false });
+
+    await connectDB();
+    const user = await User.findById(session.user.id).select("likedSongs");
+    const liked = !!user?.likedSongs.some((id) => id.toString() === params.id);
+
+    return NextResponse.json({ liked });
+  }
+);
+
 export const POST = withApiErrors(
   async (_req: Request, { params }: { params: { id: string } }) => {
     const session = await getServerSession(authOptions);
