@@ -191,7 +191,7 @@ export function MiniPlayerBar() {
             className="h-11 w-11 shrink-0 rounded-xl object-cover md:h-14 md:w-14"
           />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold md:text-base">{currentSong.title}</span>
+            <span className="block truncate text-sm font-semibold text-ink md:text-base">{currentSong.title}</span>
             <span className="flex items-center gap-1 truncate text-xs text-ink-muted">
               {currentSong.artist.stageName}
               {currentSong.artist.verified && <BadgeCheck size={12} className="shrink-0 text-verified" />}
