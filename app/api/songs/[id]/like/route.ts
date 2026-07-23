@@ -6,14 +6,6 @@ import User from "@/models/User";
 import Song from "@/models/Song";
 import { ApiError, withApiErrors } from "@/lib/apiError";
 
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { connectDB } from "@/lib/db";
-import User from "@/models/User";
-import Song from "@/models/Song";
-import { ApiError, withApiErrors } from "@/lib/apiError";
-
 export const GET = withApiErrors(
   async (_req: Request, { params }: { params: { id: string } }) => {
     const session = await getServerSession(authOptions);
