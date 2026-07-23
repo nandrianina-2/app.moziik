@@ -1,374 +1,357 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SafeImage } from "@/components/ui/SafeImage";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Shuffle,
-  Repeat,
-  Repeat1,
-  Download,
-  Check,
-  Loader2,
-  MoreHorizontal,
+  Search as SearchIcon,
   BadgeCheck,
-  Heart,
-  ListMusic,
-  ListPlus,
-  Share2,
-  Volume2,
-  Volume1,
-  VolumeX,
-  Maximize2,
+  WifiOff,
+  X,
+  Play,
+  ChevronRight,
+  Trash2,
+  Compass,
 } from "lucide-react";
-import { usePlayer } from "@/context/PlayerProvider";
-import { useToast } from "@/context/ToastProvider";
+import { SongRow } from "@/components/music/SongRow";
+import { SafeImage } from "@/components/ui/SafeImage";
+import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
 import { useOnlineStatus } from "@/context/OnlineStatusProvider";
-import { useSession } from "next-auth/react";
-import { SeekBar } from "@/components/player/SeekBar";
-import { SongContextMenu } from "@/components/music/SongContextMenu";
-import { AddToPlaylistModal } from "@/components/modals/AddToPlaylistModal";
-import { getOfflineSettings } from "@/lib/offlineSettings";
-import { downloadSongForOffline, isSongOffline, removeOfflineSong, queuePendingDownload } from "@/lib/offlineCache";
+import { listOfflineSongs } from "@/lib/offlineCache";
+import {
+  getRecentSearches,
+  addRecentSearch,
+  removeRecentSearch,
+  clearRecentSearches,
+  type RecentSearchItem,
+} from "@/lib/recentSearches";
+import type { PlayableSong } from "@/context/PlayerProvider";
 
-function formatTime(seconds: number) {
-  if (!Number.isFinite(seconds)) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+type ArtistResult = { _id: string; stageName: string; verified?: boolean; coverUrl?: string };
 
-const bitrateLabel = { low: "64 kbps", medium: "128 kbps", high: "320 kbps" } as const;
+type PopularItem =
+  | { kind: "artist"; _id: string; title: string; coverUrl?: string; verified?: boolean }
+  | { kind: "song"; _id: string; title: string; coverUrl?: string; verified?: boolean; artistName: string };
 
-export function MiniPlayerBar() {
-  const {
-    currentSong,
-    queue,
-    isPlaying,
-    progress,
-    volume,
-    setVolume,
-    togglePlay,
-    playNext,
-    playPrevious,
-    seek,
-    openFullPlayer,
-    isShuffled,
-    toggleShuffle,
-    repeatMode,
-    cycleRepeatMode,
-  } = usePlayer();
-  const { status: authStatus } = useSession();
-  const pushToast = useToast();
+export default function SearchPage() {
+  const router = useRouter();
   const { isOnline } = useOnlineStatus();
+  const [query, setQuery] = useState("");
+  const [songs, setSongs] = useState<PlayableSong[]>([]);
+  const [artists, setArtists] = useState<ArtistResult[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [offlineState, setOfflineState] = useState<"idle" | "saving" | "saved">("idle");
-  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  const [liked, setLiked] = useState(false);
-  const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
-  const [bitrate, setBitrate] = useState<string>(bitrateLabel.high);
-
-  useEffect(() => {
-    if (!currentSong) return;
-    let cancelled = false;
-    isSongOffline(currentSong._id).then((offline) => {
-      if (!cancelled) setOfflineState(offline ? "saved" : "idle");
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [currentSong]);
+  const [recent, setRecent] = useState<RecentSearchItem[]>([]);
+  const [popular, setPopular] = useState<PopularItem[]>([]);
+  const [loadingPopular, setLoadingPopular] = useState(true);
 
   useEffect(() => {
-    if (!currentSong || authStatus !== "authenticated") {
-      setLiked(false);
-      return;
+    function loadRecent() {
+      setRecent(getRecentSearches());
     }
-    fetch(`/api/songs/${currentSong._id}/like`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => data && setLiked(data.liked))
-      .catch(() => {});
-  }, [currentSong, authStatus]);
-
-  useEffect(() => {
-    getOfflineSettings().then((s) => setBitrate(bitrateLabel[s.audioQuality]));
-    const handler = () => getOfflineSettings().then((s) => setBitrate(bitrateLabel[s.audioQuality]));
-    window.addEventListener("moziik-offline-settings-change", handler);
-    return () => window.removeEventListener("moziik-offline-settings-change", handler);
+    loadRecent();
+    window.addEventListener("moziik-recent-searches-change", loadRecent);
+    return () => window.removeEventListener("moziik-recent-searches-change", loadRecent);
   }, []);
 
-  if (!currentSong) return null;
+  useEffect(() => {
+    async function loadPopular() {
+      try {
+        const [artistsRes, songsRes] = await Promise.all([
+          fetch("/api/charts?period=month&type=artists"),
+          fetch("/api/charts?period=month&type=songs"),
+        ]);
+        const artistsData = artistsRes.ok ? (await artistsRes.json()).ranking : [];
+        const songsData = songsRes.ok ? (await songsRes.json()).ranking : [];
 
-  async function handleToggleOffline() {
-    if (!currentSong || offlineState === "saving") return;
-    try {
-      if (offlineState === "saved") {
-        await removeOfflineSong(currentSong._id);
-        setOfflineState("idle");
-        pushToast("success", "Retiré du mode hors-ligne.");
-      } else if (!isOnline) {
-        await queuePendingDownload({
-          _id: currentSong._id,
-          title: currentSong.title,
-          coverUrl: currentSong.coverUrl,
-          audioUrl: currentSong.audioUrl,
-          duration: currentSong.duration,
-          artist: currentSong.artist,
-        });
-        pushToast("info", "En attente — le téléchargement démarrera à la reconnexion.");
-      } else {
-        setOfflineState("saving");
-        await downloadSongForOffline({
-          _id: currentSong._id,
-          title: currentSong.title,
-          coverUrl: currentSong.coverUrl,
-          audioUrl: currentSong.audioUrl,
-          duration: currentSong.duration,
-          artist: currentSong.artist,
-        });
-        setOfflineState("saved");
-        pushToast("success", "Disponible hors-ligne.");
+        let items: PopularItem[] = [
+          ...artistsData.slice(0, 3).map((a: { _id: string; stageName: string; coverUrl?: string; verified?: boolean }) => ({
+            kind: "artist" as const,
+            _id: a._id,
+            title: a.stageName,
+            coverUrl: a.coverUrl,
+            verified: a.verified,
+          })),
+          ...songsData.slice(0, 3).map((s: { _id: string; title: string; coverUrl?: string; verified?: boolean; artistName: string }) => ({
+            kind: "song" as const,
+            _id: s._id,
+            title: s.title,
+            coverUrl: s.coverUrl,
+            verified: s.verified,
+            artistName: s.artistName,
+          })),
+        ];
+
+        // Repli sur du contenu réel récent si pas encore assez d'écoutes
+        // enregistrées pour établir un vrai classement.
+        if (items.length < 4) {
+          const [songsFallback, artistsFallback] = await Promise.all([
+            fetch("/api/songs?limit=3").then((r) => (r.ok ? r.json() : { songs: [] })),
+            fetch("/api/artists").then((r) => (r.ok ? r.json() : { artists: [] })),
+          ]);
+          items = [
+            ...artistsFallback.artists.slice(0, 3).map((a: ArtistResult) => ({
+              kind: "artist" as const,
+              _id: a._id,
+              title: a.stageName,
+              coverUrl: a.coverUrl,
+              verified: a.verified,
+            })),
+            ...songsFallback.songs.slice(0, 3).map((s: PlayableSong) => ({
+              kind: "song" as const,
+              _id: s._id,
+              title: s.title,
+              coverUrl: s.coverUrl,
+              verified: s.artist.verified,
+              artistName: s.artist.stageName,
+            })),
+          ];
+        }
+
+        setPopular(items);
+      } finally {
+        setLoadingPopular(false);
       }
-    } catch (err) {
-      setOfflineState("idle");
-      pushToast("error", err instanceof Error ? err.message : "Échec du mode hors-ligne.");
     }
-  }
+    loadPopular();
+  }, []);
 
-  async function handleToggleLike() {
-    if (authStatus !== "authenticated") {
-      pushToast("error", "Connecte-toi pour aimer un son.");
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setSongs([]);
+      setArtists([]);
       return;
     }
-    const next = !liked;
-    setLiked(next); // optimiste
-    try {
-      const res = await fetch(`/api/songs/${currentSong!._id}/like`, { method: "POST" });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setLiked(data.liked);
-    } catch {
-      setLiked(!next);
-      pushToast("error", "Échec de l'action.");
-    }
+    const timeout = setTimeout(async () => {
+      setLoading(true);
+      try {
+        if (!isOnline) {
+          const offline = await listOfflineSongs();
+          const q = query.trim().toLowerCase();
+          setSongs(offline.filter((s) => s.title.toLowerCase().includes(q) || s.artist.stageName.toLowerCase().includes(q)));
+          setArtists([]);
+          return;
+        }
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSongs(data.songs);
+          setArtists(data.artists);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query, isOnline]);
+
+  function trackArtist(artist: ArtistResult) {
+    addRecentSearch({
+      _id: artist._id,
+      type: "artist",
+      title: artist.stageName,
+      coverUrl: artist.coverUrl ?? "",
+      subtitle: "Artiste",
+      verified: artist.verified,
+      href: `/artiste/${artist._id}`,
+    });
   }
 
-  async function handleShare() {
-    const url = `${window.location.origin}/son/${currentSong!._id}`;
-    if (navigator.share) {
-      await navigator.share({ title: currentSong!.title, url }).catch(() => {});
-    } else {
-      await navigator.clipboard.writeText(url);
-      pushToast("success", "Lien copié dans le presse-papiers.");
-    }
+  function trackSong(song: PlayableSong) {
+    addRecentSearch({
+      _id: song._id,
+      type: "song",
+      title: song.title,
+      coverUrl: song.coverUrl,
+      subtitle: song.artist.stageName,
+      verified: song.artist.verified,
+      playsCount: song.playsCount,
+      href: `/son/${song._id}`,
+    });
   }
 
-  const RepeatIcon = repeatMode === "one" ? Repeat1 : Repeat;
-  const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const showDefaultState = query.trim().length < 2;
 
   return (
-    <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface shadow-[0_-8px_32px_-16px_rgba(0,0,0,0.25)] md:bottom-0">
-      {/* Filet de progression, mobile uniquement */}
-      <div className="md:hidden">
-        <SeekBar progress={progress} duration={currentSong.duration} onSeek={seek} variant="edge" />
-      </div>
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-6xl">
+      <h1 className="text-2xl font-display mb-6">Recherche</h1>
 
-      {/* Ligne 1 : piste + actions */}
-      <div className="flex items-center gap-3 px-3 py-2.5 md:gap-4 md:px-5 md:py-3">
-        {/* Piste en cours */}
-        <button
-          onClick={openFullPlayer}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left md:w-80 md:flex-none"
-        >
-          <SafeImage
-            src={currentSong.coverUrl}
-            alt={currentSong.title}
-            width={56}
-            height={56}
-            className="h-11 w-11 shrink-0 rounded-xl object-cover md:h-14 md:w-14"
-          />
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold md:text-base">{currentSong.title}</span>
-            <span className="flex items-center gap-1 truncate text-xs text-ink-muted">
-              {currentSong.artist.stageName}
-              {currentSong.artist.verified && <BadgeCheck size={12} className="shrink-0 text-verified" />}
-            </span>
-            <span className="mt-1.5 hidden items-center gap-1.5 md:flex">
-              <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">MP3</span>
-              <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">{bitrate}</span>
-              <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">44.1 kHz</span>
-            </span>
-          </span>
-        </button>
-
-        {/* Coeur — desktop uniquement */}
-        <button
-          onClick={handleToggleLike}
-          aria-label={liked ? "Ne plus aimer" : "J'aime"}
-          className={`hidden shrink-0 transition-colors md:block ${liked ? "text-accent" : "text-ink-muted hover:text-ink"}`}
-        >
-          <Heart size={20} fill={liked ? "currentColor" : "none"} />
-        </button>
-
-        <div className="hidden h-6 w-px shrink-0 bg-border md:block" />
-
-        {/* Mobile : bouton lecture/pause à droite */}
-        <button
-          onClick={togglePlay}
-          aria-label={isPlaying ? "Pause" : "Lecture"}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-base transition-colors hover:bg-accent-hover md:hidden"
-        >
-          {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
-        </button>
-
-        {/* Desktop : cluster central — transport */}
-        <div className="hidden md:flex md:items-center md:gap-5 md:px-2">
-          <button
-            onClick={toggleShuffle}
-            aria-label="Lecture aléatoire"
-            aria-pressed={isShuffled}
-            className={`transition-colors ${isShuffled ? "text-accent" : "text-ink-muted hover:text-ink"}`}
-          >
-            <Shuffle size={17} />
-          </button>
-          <button onClick={playPrevious} aria-label="Précédent" className="text-ink transition-colors hover:text-accent">
-            <SkipBack size={20} fill="currentColor" />
-          </button>
-          <button
-            onClick={togglePlay}
-            aria-label={isPlaying ? "Pause" : "Lecture"}
-            className="grid h-10 w-10 place-items-center rounded-full bg-ink text-base transition-transform hover:scale-105"
-          >
-            {isPlaying ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" className="ml-0.5" />}
-          </button>
-          <button onClick={playNext} aria-label="Suivant" className="text-ink transition-colors hover:text-accent">
-            <SkipForward size={20} fill="currentColor" />
-          </button>
-          <button
-            onClick={cycleRepeatMode}
-            aria-label="Répéter"
-            aria-pressed={repeatMode !== "off"}
-            className={`transition-colors ${repeatMode !== "off" ? "text-accent" : "text-ink-muted hover:text-ink"}`}
-          >
-            <RepeatIcon size={17} />
-          </button>
-        </div>
-
-        <div className="hidden h-6 w-px shrink-0 bg-border md:block" />
-
-        {/* Droite : actions avec libellés, desktop uniquement */}
-        <div className="hidden md:flex md:flex-1 md:items-start md:justify-end md:gap-6">
-          <button
-            onClick={openFullPlayer}
-            className="flex flex-col items-center gap-1 text-ink-muted transition-colors hover:text-ink"
-          >
-            <span className="relative inline-flex">
-              <ListMusic size={18} />
-              {queue.length > 0 && (
-                <span
-                  className="absolute grid place-items-center rounded-full bg-accent font-semibold text-base"
-                  style={{
-                    top: -6,
-                    right: -8,
-                    height: 16,
-                    minWidth: 16,
-                    padding: "0 4px",
-                    fontSize: 9,
-                    lineHeight: 1,
-                  }}
-                >
-                  {queue.length > 9 ? "9+" : queue.length}
-                </span>
-              )}
-            </span>
-            <span className="text-[11px]">File d&apos;attente</span>
-          </button>
-
-          <button
-            onClick={() => setShowAddToPlaylist(true)}
-            className="flex flex-col items-center gap-1 text-ink-muted transition-colors hover:text-ink"
-          >
-            <ListPlus size={18} />
-            <span className="text-[11px]">Ajouter</span>
-          </button>
-
-          <button
-            onClick={handleToggleOffline}
-            disabled={offlineState === "saving"}
-            className={`flex flex-col items-center gap-1 transition-colors ${
-              offlineState === "saved" ? "text-accent" : "text-ink-muted hover:text-ink"
-            }`}
-          >
-            {offlineState === "saving" ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : offlineState === "saved" ? (
-              <Check size={18} />
-            ) : (
-              <Download size={18} />
-            )}
-            <span className="text-[11px]">Télécharger</span>
-          </button>
-
-          <button onClick={handleShare} className="flex flex-col items-center gap-1 text-ink-muted transition-colors hover:text-ink">
-            <Share2 size={18} />
-            <span className="text-[11px]">Partager</span>
-          </button>
-
-          <button
-            onClick={(e) => setMenuPosition({ x: e.clientX, y: e.clientY })}
-            className="flex flex-col items-center gap-1 text-ink-muted transition-colors hover:text-ink"
-          >
-            <MoreHorizontal size={18} />
-            <span className="text-[11px]">Plus</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Ligne 2, desktop uniquement : progression + volume + agrandir */}
-      <div className="hidden items-center gap-4 px-5 pb-3 md:flex">
-        <span className="w-9 shrink-0 text-right text-[11px] tabular-nums text-ink-muted">
-          {formatTime(progress)}
-        </span>
-        <SeekBar progress={progress} duration={currentSong.duration} onSeek={seek} variant="pill" className="flex-1" />
-        <span className="w-9 shrink-0 text-[11px] tabular-nums text-ink-muted">
-          {formatTime(currentSong.duration)}
-        </span>
-
-        <div className="mx-1 h-4 w-px bg-border" />
-
-        <div className="flex w-36 shrink-0 items-center gap-2">
-          <button
-            onClick={() => setVolume(volume > 0 ? 0 : 1)}
-            aria-label={volume === 0 ? "Réactiver le son" : "Couper le son"}
-            className="shrink-0 text-ink-muted hover:text-ink"
-          >
-            <VolumeIcon size={17} />
-          </button>
-          <SeekBar progress={volume} duration={1} onSeek={setVolume} variant="pill" />
-        </div>
-
-        <button
-          onClick={openFullPlayer}
-          aria-label="Lecteur plein écran"
-          className="shrink-0 text-ink-muted hover:text-ink"
-        >
-          <Maximize2 size={16} />
-        </button>
-      </div>
-
-      {menuPosition && (
-        <SongContextMenu
-          song={currentSong}
-          position={menuPosition}
-          hideOffline
-          onClose={() => setMenuPosition(null)}
-        />
+      {!isOnline && (
+        <p className="flex items-center gap-1.5 text-xs text-accent mb-4">
+          <WifiOff size={12} /> Hors-ligne — recherche limitée à tes sons téléchargés
+        </p>
       )}
-      {showAddToPlaylist && (
-        <AddToPlaylistModal songId={currentSong._id} onClose={() => setShowAddToPlaylist(false)} />
+
+      <label className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 mb-8">
+        <SearchIcon size={18} className="text-ink-muted shrink-0" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher un son, un artiste, un album..."
+          className="flex-1 bg-transparent text-sm outline-none"
+          autoFocus
+        />
+      </label>
+
+      {loading && (
+        <div className="py-10 grid place-items-center">
+          <EqualizerLoader />
+        </div>
+      )}
+
+      {!showDefaultState && !loading && artists.length === 0 && songs.length === 0 && (
+        <p className="text-sm text-ink-muted">Aucun résultat pour &quot;{query}&quot;.</p>
+      )}
+
+      {!showDefaultState && artists.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm uppercase tracking-wide text-ink-muted mb-4">Artistes</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {artists.map((artist) => (
+              <Link
+                key={artist._id}
+                href={`/artiste/${artist._id}`}
+                onClick={() => trackArtist(artist)}
+                className="shrink-0 w-20 text-center"
+              >
+                <SafeImage src={artist.coverUrl} alt={artist.stageName} width={64} height={64} className="rounded-full object-cover mx-auto mb-2" />
+                <p className="text-xs truncate flex items-center justify-center gap-1">
+                  {artist.stageName}
+                  {artist.verified && <BadgeCheck size={11} className="text-verified shrink-0" />}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!showDefaultState && songs.length > 0 && (
+        <section>
+          <h2 className="text-sm uppercase tracking-wide text-ink-muted mb-4">Sons</h2>
+          <div className="space-y-1">
+            {songs.map((song, index) => (
+              <div key={song._id} onClick={() => trackSong(song)}>
+                <SongRow song={song} queue={songs} index={index} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {showDefaultState && (
+        <>
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg">Dernières recherches</h2>
+              {recent.length > 0 && (
+                <button
+                  onClick={clearRecentSearches}
+                  className="flex items-center gap-1 text-xs text-accent hover:underline"
+                >
+                  <Trash2 size={12} /> Effacer l&apos;historique
+                </button>
+              )}
+            </div>
+
+            {recent.length === 0 ? (
+              <p className="text-sm text-ink-muted">
+                Tes recherches récentes apparaîtront ici.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {recent.map((item) => (
+                  <div key={item._id} className="relative rounded-xl2 border border-border bg-surface p-3">
+                    <button
+                      onClick={() => removeRecentSearch(item._id)}
+                      aria-label="Retirer de l'historique"
+                      className="absolute top-2.5 right-2.5 grid h-6 w-6 place-items-center rounded-full bg-base/80 text-ink-muted hover:text-accent"
+                    >
+                      <X size={12} />
+                    </button>
+                    <Link href={item.href}>
+                      <SafeImage src={item.coverUrl} alt={item.title} width={100} height={100} className="rounded-lg object-cover w-full aspect-square mb-3" />
+                      <p className="flex items-center gap-1 text-sm font-medium truncate">
+                        {item.title}
+                        {item.verified && <BadgeCheck size={12} className="text-verified shrink-0" />}
+                      </p>
+                      <p className="text-xs text-ink-muted truncate mb-1.5">{item.subtitle}</p>
+                      {item.type === "song" && typeof item.playsCount === "number" && (
+                        <p className="flex items-center gap-1 text-[11px] text-ink-muted">
+                          <Play size={10} /> {item.playsCount} écoute{item.playsCount > 1 ? "s" : ""}
+                        </p>
+                      )}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg">Suggestions populaires</h2>
+              <Link href="/classements" className="text-xs text-accent hover:underline">
+                Tout voir
+              </Link>
+            </div>
+
+            {loadingPopular && (
+              <div className="py-6 grid place-items-center">
+                <EqualizerLoader size="sm" />
+              </div>
+            )}
+
+            {!loadingPopular && popular.length === 0 && (
+              <p className="text-sm text-ink-muted">Pas encore assez de contenu à suggérer.</p>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {popular.map((item) => (
+                <Link
+                  key={`${item.kind}-${item._id}`}
+                  href={item.kind === "artist" ? `/artiste/${item._id}` : `/son/${item._id}`}
+                  className="flex items-center gap-3 rounded-xl2 border border-border bg-surface px-4 py-3 hover:border-accent transition-colors"
+                >
+                  <SafeImage
+                    src={item.coverUrl}
+                    alt={item.title}
+                    width={44}
+                    height={44}
+                    className={`object-cover shrink-0 ${item.kind === "artist" ? "rounded-full" : "rounded-lg"}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1 text-sm font-medium truncate">
+                      {item.title}
+                      {item.verified && <BadgeCheck size={12} className="text-verified shrink-0" />}
+                    </p>
+                    <p className="text-xs text-ink-muted truncate">
+                      {item.kind === "artist" ? "Artiste" : `Son · ${item.artistName}`}
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="text-ink-muted shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-xl2 bg-accent/10 border border-accent/20 p-5 sm:p-6">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">
+              <Compass size={22} />
+            </span>
+            <div className="flex-1">
+              <p className="font-display text-base mb-1">Découvrez de nouveaux sons</p>
+              <p className="text-sm text-ink-muted">
+                Recherchez un morceau, un artiste ou un album et profitez de votre musique.
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/radio")}
+              className="rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-base hover:bg-accent-hover shrink-0"
+            >
+              Explorer
+            </button>
+          </section>
+        </>
       )}
     </div>
   );

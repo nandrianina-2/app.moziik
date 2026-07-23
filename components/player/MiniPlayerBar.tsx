@@ -41,7 +41,7 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-const qualityLabel = { low: "64 kb/s", medium: "128 kb/s", high: "320 kb/s" } as const;
+const bitrateLabel = { low: "64 kbps", medium: "128 kbps", high: "320 kbps" } as const;
 
 export function MiniPlayerBar() {
   const {
@@ -69,7 +69,7 @@ export function MiniPlayerBar() {
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [liked, setLiked] = useState(false);
   const [showAddToPlaylist, setShowAddToPlaylist] = useState(false);
-  const [quality, setQuality] = useState<string>("320 kb/s");
+  const [bitrate, setBitrate] = useState<string>(bitrateLabel.high);
 
   useEffect(() => {
     if (!currentSong) return;
@@ -94,8 +94,8 @@ export function MiniPlayerBar() {
   }, [currentSong, authStatus]);
 
   useEffect(() => {
-    getOfflineSettings().then((s) => setQuality(qualityLabel[s.audioQuality]));
-    const handler = () => getOfflineSettings().then((s) => setQuality(qualityLabel[s.audioQuality]));
+    getOfflineSettings().then((s) => setBitrate(bitrateLabel[s.audioQuality]));
+    const handler = () => getOfflineSettings().then((s) => setBitrate(bitrateLabel[s.audioQuality]));
     window.addEventListener("moziik-offline-settings-change", handler);
     return () => window.removeEventListener("moziik-offline-settings-change", handler);
   }, []);
@@ -170,49 +170,52 @@ export function MiniPlayerBar() {
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="fixed bottom-16 md:bottom-0 inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.4)]">
-      {/* Ligne fine pleine largeur, uniquement sur mobile — comme le mini-player Spotify mobile */}
+    <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface shadow-[0_-8px_32px_-16px_rgba(0,0,0,0.25)] md:bottom-0">
+      {/* Filet de progression, mobile uniquement */}
       <div className="md:hidden">
         <SeekBar progress={progress} duration={currentSong.duration} onSeek={seek} variant="edge" />
       </div>
 
-      {/* ----- Ligne 1 (mobile : seule ligne ; desktop : piste + transport + actions) ----- */}
-      <div className="flex items-center gap-3 px-4 pt-2.5 pb-1.5 md:gap-4 md:px-5 md:pt-3 md:pb-1.5">
+      {/* Ligne 1 : piste + actions */}
+      <div className="flex items-center gap-3 px-3 py-2.5 md:gap-4 md:px-5 md:py-3">
         {/* Piste en cours */}
         <button
           onClick={openFullPlayer}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left md:w-72 md:flex-none"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left md:w-80 md:flex-none"
         >
           <SafeImage
             src={currentSong.coverUrl}
             alt={currentSong.title}
-            width={44}
-            height={44}
-            className="h-11 w-11 shrink-0 rounded-lg object-cover md:h-14 md:w-14"
+            width={56}
+            height={56}
+            className="h-11 w-11 shrink-0 rounded-xl object-cover md:h-14 md:w-14"
           />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-medium md:text-base">{currentSong.title}</span>
+            <span className="block truncate text-sm font-semibold md:text-base">{currentSong.title}</span>
             <span className="flex items-center gap-1 truncate text-xs text-ink-muted">
               {currentSong.artist.stageName}
               {currentSong.artist.verified && <BadgeCheck size={12} className="shrink-0 text-verified" />}
             </span>
-            <span className="hidden md:flex items-center gap-1.5 mt-1.5">
-              <span className="rounded-md bg-base px-1.5 py-0.5 text-[10px] text-ink-muted">Audio</span>
-              <span className="rounded-md bg-base px-1.5 py-0.5 text-[10px] text-ink-muted">{quality}</span>
+            <span className="mt-1.5 hidden items-center gap-1.5 md:flex">
+              <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">MP3</span>
+              <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">{bitrate}</span>
+              <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">44.1 kHz</span>
             </span>
           </span>
         </button>
 
-        {/* Coeur — desktop uniquement ici (mobile : dans le lecteur plein écran) */}
+        {/* Coeur — desktop uniquement */}
         <button
           onClick={handleToggleLike}
           aria-label={liked ? "Ne plus aimer" : "J'aime"}
-          className={`hidden md:block shrink-0 transition-colors ${liked ? "text-accent" : "text-ink-muted hover:text-ink"}`}
+          className={`hidden shrink-0 transition-colors md:block ${liked ? "text-accent" : "text-ink-muted hover:text-ink"}`}
         >
           <Heart size={20} fill={liked ? "currentColor" : "none"} />
         </button>
 
-        {/* Mobile : juste le bouton lecture/pause à droite */}
+        <div className="hidden h-6 w-px shrink-0 bg-border md:block" />
+
+        {/* Mobile : bouton lecture/pause à droite */}
         <button
           onClick={togglePlay}
           aria-label={isPlaying ? "Pause" : "Lecture"}
@@ -222,7 +225,7 @@ export function MiniPlayerBar() {
         </button>
 
         {/* Desktop : cluster central — transport */}
-        <div className="hidden md:flex md:items-center md:gap-5 md:px-6">
+        <div className="hidden md:flex md:items-center md:gap-5 md:px-2">
           <button
             onClick={toggleShuffle}
             aria-label="Lecture aléatoire"
@@ -254,17 +257,30 @@ export function MiniPlayerBar() {
           </button>
         </div>
 
+        <div className="hidden h-6 w-px shrink-0 bg-border md:block" />
+
         {/* Droite : actions avec libellés, desktop uniquement */}
-        <div className="hidden md:flex md:flex-1 md:items-start md:justify-end md:gap-5">
+        <div className="hidden md:flex md:flex-1 md:items-start md:justify-end md:gap-6">
           <button
             onClick={openFullPlayer}
             className="flex flex-col items-center gap-1 text-ink-muted transition-colors hover:text-ink"
           >
-            <span className="relative">
+            <span className="relative inline-flex">
               <ListMusic size={18} />
               {queue.length > 0 && (
-                <span className="absolute -top-1.5 -right-2 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-accent px-0.5 text-[9px] font-medium text-base">
-                  {queue.length}
+                <span
+                  className="absolute grid place-items-center rounded-full bg-accent font-semibold text-base"
+                  style={{
+                    top: -6,
+                    right: -8,
+                    height: 16,
+                    minWidth: 16,
+                    padding: "0 4px",
+                    fontSize: 9,
+                    lineHeight: 1,
+                  }}
+                >
+                  {queue.length > 9 ? "9+" : queue.length}
                 </span>
               )}
             </span>
@@ -311,8 +327,8 @@ export function MiniPlayerBar() {
         </div>
       </div>
 
-      {/* ----- Ligne 2, desktop uniquement : progression + volume + agrandir ----- */}
-      <div className="hidden md:flex md:items-center md:gap-4 md:px-5 md:pb-3">
+      {/* Ligne 2, desktop uniquement : progression + volume + agrandir */}
+      <div className="hidden items-center gap-4 px-5 pb-3 md:flex">
         <span className="w-9 shrink-0 text-right text-[11px] tabular-nums text-ink-muted">
           {formatTime(progress)}
         </span>
@@ -321,13 +337,13 @@ export function MiniPlayerBar() {
           {formatTime(currentSong.duration)}
         </span>
 
-        <div className="h-4 w-px bg-border mx-1" />
+        <div className="mx-1 h-4 w-px bg-border" />
 
-        <div className="flex items-center gap-2 w-36 shrink-0">
+        <div className="flex w-36 shrink-0 items-center gap-2">
           <button
             onClick={() => setVolume(volume > 0 ? 0 : 1)}
             aria-label={volume === 0 ? "Réactiver le son" : "Couper le son"}
-            className="text-ink-muted hover:text-ink shrink-0"
+            className="shrink-0 text-ink-muted hover:text-ink"
           >
             <VolumeIcon size={17} />
           </button>
@@ -337,7 +353,7 @@ export function MiniPlayerBar() {
         <button
           onClick={openFullPlayer}
           aria-label="Lecteur plein écran"
-          className="text-ink-muted hover:text-ink shrink-0"
+          className="shrink-0 text-ink-muted hover:text-ink"
         >
           <Maximize2 size={16} />
         </button>
