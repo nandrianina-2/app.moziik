@@ -170,25 +170,24 @@ export function MiniPlayerBar() {
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface shadow-[0_-8px_32px_-16px_rgba(0,0,0,0.25)] md:bottom-0">
+    <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface shadow-[0_-8px_32px_-16px_rgba(0,0,0,0.25)] md:inset-x-4 md:bottom-4 md:rounded-[28px] md:border md:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] lg:inset-x-8">
       {/* Filet de progression, mobile uniquement */}
       <div className="md:hidden">
         <SeekBar progress={progress} duration={currentSong.duration} onSeek={seek} variant="edge" />
       </div>
 
-      {/* Ligne 1 : piste + actions */}
-      <div className="flex items-center gap-3 px-3 py-2.5 md:gap-4 md:px-5 md:py-3">
-        {/* Piste en cours */}
+      {/* Ligne mobile : piste + lecture (remplacée par la ligne unique desktop ci-dessous) */}
+      <div className="flex items-center gap-3 px-3 py-2.5 md:hidden">
         <button
           onClick={openFullPlayer}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left md:w-80 md:flex-none"
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
         >
           <SafeImage
             src={currentSong.coverUrl}
             alt={currentSong.title}
             width={56}
             height={56}
-            className="h-11 w-11 shrink-0 rounded-xl object-cover md:h-14 md:w-14"
+            className="h-11 w-11 shrink-0 rounded-xl object-cover"
           />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold text-ink">{currentSong.title}</span>
@@ -196,7 +195,39 @@ export function MiniPlayerBar() {
               {currentSong.artist.stageName}
               {currentSong.artist.verified && <BadgeCheck size={12} className="shrink-0 text-verified" />}
             </span>
-            <span className="mt-1.5 hidden items-center gap-1.5 md:flex">
+          </span>
+        </button>
+
+        <button
+          onClick={togglePlay}
+          aria-label={isPlaying ? "Pause" : "Lecture"}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-base transition-colors hover:bg-accent-hover"
+        >
+          {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
+        </button>
+      </div>
+
+      {/* Ligne desktop : tout tient sur une seule ligne, à la manière d'un lecteur premium */}
+      <div className="hidden items-center gap-4 px-5 py-3 md:flex lg:gap-5 lg:px-6">
+        {/* Piste en cours */}
+        <button
+          onClick={openFullPlayer}
+          className="flex w-60 min-w-0 shrink-0 items-center gap-3 text-left lg:w-72"
+        >
+          <SafeImage
+            src={currentSong.coverUrl}
+            alt={currentSong.title}
+            width={56}
+            height={56}
+            className="h-14 w-14 shrink-0 rounded-2xl object-cover"
+          />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-ink">{currentSong.title}</span>
+            <span className="flex items-center gap-1 truncate text-xs text-ink-muted">
+              {currentSong.artist.stageName}
+              {currentSong.artist.verified && <BadgeCheck size={12} className="shrink-0 text-verified" />}
+            </span>
+            <span className="mt-1.5 flex items-center gap-1.5">
               <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">MP3</span>
               <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">{bitrate}</span>
               <span className="rounded-md bg-base px-2 py-0.5 text-[10px] font-medium text-ink-muted">44.1 kHz</span>
@@ -204,28 +235,19 @@ export function MiniPlayerBar() {
           </span>
         </button>
 
-        {/* Coeur — desktop uniquement */}
+        {/* Coeur */}
         <button
           onClick={handleToggleLike}
           aria-label={liked ? "Ne plus aimer" : "J'aime"}
-          className={`hidden shrink-0 transition-colors md:block ${liked ? "text-accent" : "text-ink-muted hover:text-ink"}`}
+          className={`shrink-0 transition-colors ${liked ? "text-accent" : "text-ink-muted hover:text-ink"}`}
         >
-          <Heart size={20} fill={liked ? "currentColor" : "none"} />
+          <Heart size={22} fill={liked ? "currentColor" : "none"} />
         </button>
 
-        <div className="hidden h-6 w-px shrink-0 bg-border md:block" />
+        <div className="h-8 w-px shrink-0 bg-border" />
 
-        {/* Mobile : bouton lecture/pause à droite */}
-        <button
-          onClick={togglePlay}
-          aria-label={isPlaying ? "Pause" : "Lecture"}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent text-base transition-colors hover:bg-accent-hover md:hidden"
-        >
-          {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
-        </button>
-
-        {/* Desktop : cluster central — transport */}
-        <div className="hidden md:flex md:items-center md:gap-5 md:px-2">
+        {/* Transport */}
+        <div className="flex shrink-0 items-center gap-5">
           <button
             onClick={toggleShuffle}
             aria-label="Lecture aléatoire"
@@ -257,10 +279,23 @@ export function MiniPlayerBar() {
           </button>
         </div>
 
-        <div className="hidden h-6 w-px shrink-0 bg-border md:block" />
+        <div className="h-8 w-px shrink-0 bg-border" />
 
-        {/* Droite : actions avec libellés, desktop uniquement */}
-        <div className="hidden md:flex md:flex-1 md:items-start md:justify-end md:gap-6">
+        {/* Progression */}
+        <div className="flex min-w-[160px] flex-1 items-center gap-3">
+          <span className="w-9 shrink-0 text-right text-[11px] tabular-nums text-ink-muted">
+            {formatTime(progress)}
+          </span>
+          <SeekBar progress={progress} duration={currentSong.duration} onSeek={seek} variant="pill" className="flex-1" />
+          <span className="w-9 shrink-0 text-[11px] tabular-nums text-ink-muted">
+            {formatTime(currentSong.duration)}
+          </span>
+        </div>
+
+        <div className="h-8 w-px shrink-0 bg-border" />
+
+        {/* Actions avec libellés */}
+        <div className="flex shrink-0 items-start gap-5">
           <button
             onClick={openFullPlayer}
             className="flex flex-col items-center gap-1 text-ink-muted transition-colors hover:text-ink"
@@ -269,7 +304,7 @@ export function MiniPlayerBar() {
               <ListMusic size={18} />
               {queue.length > 0 && (
                 <span
-                  className="absolute grid place-items-center rounded-full bg-accent font-semibold text-base"
+                  className="absolute grid place-items-center rounded-full bg-ink font-semibold text-base"
                   style={{
                     top: -6,
                     right: -8,
@@ -325,21 +360,11 @@ export function MiniPlayerBar() {
             <span className="text-[11px]">Plus</span>
           </button>
         </div>
-      </div>
 
-      {/* Ligne 2, desktop uniquement : progression + volume + agrandir */}
-      <div className="hidden items-center gap-4 px-5 pb-3 md:flex">
-        <span className="w-9 shrink-0 text-right text-[11px] tabular-nums text-ink-muted">
-          {formatTime(progress)}
-        </span>
-        <SeekBar progress={progress} duration={currentSong.duration} onSeek={seek} variant="pill" className="flex-1" />
-        <span className="w-9 shrink-0 text-[11px] tabular-nums text-ink-muted">
-          {formatTime(currentSong.duration)}
-        </span>
+        <div className="h-8 w-px shrink-0 bg-border" />
 
-        <div className="mx-1 h-4 w-px bg-border" />
-
-        <div className="flex w-36 shrink-0 items-center gap-2">
+        {/* Volume */}
+        <div className="flex w-28 shrink-0 items-center gap-2 lg:w-32">
           <button
             onClick={() => setVolume(volume > 0 ? 0 : 1)}
             aria-label={volume === 0 ? "Réactiver le son" : "Couper le son"}
@@ -350,6 +375,7 @@ export function MiniPlayerBar() {
           <SeekBar progress={volume} duration={1} onSeek={setVolume} variant="pill" />
         </div>
 
+        {/* Plein écran */}
         <button
           onClick={openFullPlayer}
           aria-label="Lecteur plein écran"
