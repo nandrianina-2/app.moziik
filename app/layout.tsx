@@ -60,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <OfflineBanner />
                     <div className="flex min-h-screen">
                       <Sidebar />
-                      <main className="flex-1 pt-14 md:pt-0 pb-48 md:pb-24">{children}</main>
+                      <main className="flex-1 pt-14 md:pt-0 pb-40 md:pb-24">{children}</main>
                     </div>
                     <MiniPlayerBar />
                     <FullPlayerPage />
