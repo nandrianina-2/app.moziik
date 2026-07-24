@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, Wallet, Shield, Mic2, Crown } from "lucide-react";
+import { LogOut, Wallet, Shield, Mic2, Crown, ChevronRight, Pencil } from "lucide-react";
 import { EqualizerLoader } from "@/components/ui/EqualizerLoader";
-import { BadgeChip } from "@/components/ui/BadgeChip";
+import { SafeImage } from "@/components/ui/SafeImage";
 
 type Subscription = { plan: string; status: string; currentPeriodEnd: string } | null;
 
@@ -52,77 +52,134 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="px-6 py-8 md:px-10 md:py-10 max-w-lg">
-      <h1 className="text-2xl font-display mb-6">Mon compte</h1>
+    <div className="px-6 py-8 md:px-10 md:py-10 max-w-3xl">
+      {/* Fil d'Ariane */}
+      <nav className="mb-6 flex items-center gap-1.5 text-sm text-ink-muted">
+        <Link href="/" className="hover:text-ink">Accueil</Link>
+        <ChevronRight size={14} />
+        <span className="text-ink">Compte</span>
+      </nav>
 
-      <div className="rounded-xl2 border border-border bg-surface p-5 mb-6">
-        <p className="text-sm font-medium">{session.user.name}</p>
-        <p className="text-xs text-ink-muted mb-3">{session.user.email}</p>
-        <span className="inline-block rounded-full border border-border px-3 py-1 text-xs text-ink-muted">
-          {roleLabels[session.user.role ?? "member"]}
-        </span>
+      <h1 className="mb-8 text-2xl font-display font-bold md:text-3xl">Mon compte</h1>
+
+      {/* Profil */}
+      <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
+        <p className="mb-4 text-base font-semibold text-ink">Profil</p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <SafeImage
+              src={session.user.image}
+              alt={session.user.name ?? "Profil"}
+              width={64}
+              height={64}
+              className="h-16 w-16 shrink-0 rounded-full object-cover"
+            />
+            <div>
+              <p className="text-base font-semibold text-ink">{session.user.name}</p>
+              <p className="text-sm text-ink-muted">{session.user.email}</p>
+              <span className="mt-2 inline-block rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+                {roleLabels[session.user.role ?? "member"]}
+              </span>
+            </div>
+          </div>
+          <button className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-ink-muted">
+            <Pencil size={14} /> Modifier le profil
+          </button>
+        </div>
       </div>
 
-      <div className="rounded-xl2 border border-border bg-surface p-5 mb-6">
-        <p className="flex items-center gap-1.5 text-sm font-medium mb-2">
-          <Wallet size={15} className="text-accent" /> Abonnement
-        </p>
-        {session.user.role === "admin" ? (
-          <p className="flex items-center gap-1.5 text-xs text-verified">
-            <Crown size={13} /> Accès Premium illimité (compte admin)
-          </p>
-        ) : subscription ? (
-          <p className="text-xs text-ink-muted">
-            Plan {subscription.plan === "premium_annual" ? "Premium annuel" : "Premium"} — statut : {subscription.status}
-            <br />
-            Renouvellement : {new Date(subscription.currentPeriodEnd).toLocaleDateString("fr-FR")}
-          </p>
-        ) : (
-          <p className="text-xs text-ink-muted mb-3">Tu n&apos;as pas encore d&apos;abonnement actif.</p>
-        )}
-        {session.user.role !== "admin" && (
-          <Link href="/abonnement" className="inline-block text-xs text-accent hover:underline mt-2">
-            {hasPremium ? "Gérer mon abonnement" : "Passer en Premium"}
-          </Link>
-        )}
+      {/* Abonnement */}
+      <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="mb-2 flex items-center gap-2 text-base font-semibold text-ink">
+              <Wallet size={18} className="text-accent" /> Abonnement
+            </p>
+            {session.user.role === "admin" ? (
+              <p className="flex items-center gap-1.5 text-sm text-verified">
+                <Crown size={14} /> Accès Premium illimité (compte admin)
+              </p>
+            ) : subscription ? (
+              <p className="text-sm text-ink-muted">
+                Plan {subscription.plan === "premium_annual" ? "Premium annuel" : "Premium"} — statut : {subscription.status}
+                <br />
+                Renouvellement : {new Date(subscription.currentPeriodEnd).toLocaleDateString("fr-FR")}
+              </p>
+            ) : (
+              <p className="text-sm text-ink-muted">Tu n&apos;as pas encore d&apos;abonnement actif.</p>
+            )}
+          </div>
+          {session.user.role !== "admin" && (
+            <Link
+              href="/abonnement"
+              className="shrink-0 rounded-xl border border-accent px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
+            >
+              {hasPremium ? "Gérer l'abonnement" : "Passer en Premium"}
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2 mb-6">
-        {session.user.role === "artist" && (
-          <Link
-            href="/artiste/gestion"
-            className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm hover:border-accent"
-          >
-            <Mic2 size={15} className="text-ink-muted" /> Mon espace artiste
-          </Link>
-        )}
-        {session.user.role === "artist" && (
-          <Link
-            href="/artiste/revenus"
-            className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm hover:border-accent"
-          >
-            <Wallet size={15} className="text-ink-muted" /> Mes revenus d&apos;artiste
-          </Link>
-        )}
-        {session.user.role === "admin" && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm hover:border-accent"
-          >
-            <Shield size={15} className="text-ink-muted" /> Administration
-          </Link>
-        )}
-      </div>
+      {/* Espace artiste / revenus / administration */}
+      {session.user.role === "artist" && (
+        <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="flex items-center gap-2 text-base font-semibold text-ink">
+              <Mic2 size={18} className="text-ink-muted" /> Mon espace artiste
+            </p>
+            <Link
+              href="/artiste/gestion"
+              className="shrink-0 rounded-xl border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-ink-muted"
+            >
+              Ouvrir
+            </Link>
+          </div>
+        </div>
+      )}
 
-      <div className="flex flex-wrap gap-2 mb-8">
-        <BadgeChip label={roleLabels[session.user.role ?? "member"]} category={session.user.role === "artist" ? "artist" : "member"} />
-      </div>
+      {session.user.role === "artist" && (
+        <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <p className="flex items-center gap-2 text-base font-semibold text-ink">
+              <Wallet size={18} className="text-ink-muted" /> Mes revenus d&apos;artiste
+            </p>
+            <Link
+              href="/artiste/revenus"
+              className="shrink-0 rounded-xl border border-border px-4 py-2 text-sm font-medium text-ink transition-colors hover:border-ink-muted"
+            >
+              Ouvrir
+            </Link>
+          </div>
+        </div>
+      )}
 
+      {session.user.role === "admin" && (
+        <div className="mb-6 rounded-2xl border border-border bg-surface p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="mb-1 flex items-center gap-2 text-base font-semibold text-ink">
+                <Shield size={18} /> Administration
+              </p>
+              <p className="text-sm text-ink-muted">
+                Accès à l&apos;espace d&apos;administration pour gérer les utilisateurs, contenus et paramètres.
+              </p>
+            </div>
+            <Link
+              href="/admin"
+              className="shrink-0 rounded-xl border border-ink px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-base"
+            >
+              Ouvrir l&apos;administration
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Déconnexion */}
       <button
         onClick={() => signOut({ callbackUrl: "/" })}
-        className="flex items-center gap-2 text-sm text-accent hover:underline mb-8"
+        className="mb-8 flex w-full items-center justify-center gap-2 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-4 text-sm font-medium text-accent transition-colors hover:bg-accent/10"
       >
-        <LogOut size={15} /> Se déconnecter
+        <LogOut size={16} /> Se déconnecter
       </button>
 
       <div className="flex gap-4 text-xs text-ink-muted">
