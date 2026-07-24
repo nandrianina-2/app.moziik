@@ -33,7 +33,7 @@ export function MobileHeader() {
           ) : (
             <EqualizerLoader size="sm" />
           )}
-          <span className="font-display text-base truncate">{siteConfig.siteName}</span>
+          <span className="font-display text-base text-ink-muted truncate">{siteConfig.siteName}</span>
         </span>
 
         <div className="flex items-center gap-1">
